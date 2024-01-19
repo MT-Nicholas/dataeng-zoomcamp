@@ -163,6 +163,7 @@ docker run -it \
 * `-v` points to the volume directory. The colon `:` separates the first part (path to the folder in the host computer) from the second part (path to the folder inside the container).
     * Path names must be absolute. If you're in a UNIX-like system, you can use `pwd` to print you local folder as a shortcut; this example should work with both `bash` and `zsh` shells, but `fish` will require you to remove the `$`.
     * This command will only work if you run it from a directory which contains the `ny_taxi_postgres_data` subdirectory you created above.
+    * If you are operating on windows, you need to provide the full absolute directory, in the format `c:\...\...`
 * The `-p` is for port mapping. We map the default Postgres port to the same port in the host.
 * The last argument is the image name and tag. We run the official `postgres` image on its version `13`.
 
