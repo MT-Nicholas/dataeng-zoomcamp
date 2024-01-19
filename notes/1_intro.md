@@ -134,7 +134,7 @@ docker run -it test:pandas some_number
 
 You should get the same output you did when you ran the pipeline script by itself.
 
->Note: these instructions asume that `pipeline.py` and `Dockerfile` are in the same directory. The Docker commands should also be run from the same directory as these files.
+>Note: It is important to note that the config file needs to be named 'Dockerfile' with no extension and also you need to run "docker build -t test:pandas ." from the directory where you saved this file. These instructions asume that `pipeline.py` and `Dockerfile` are in the same directory. The Docker commands should also be run from the same directory as these files.
 
 ## Running Postgres in a container
 
