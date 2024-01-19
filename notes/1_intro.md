@@ -124,15 +124,15 @@ Let's build the image:
 ```ssh
 docker build -t test:pandas .
 ```
-* The image name will be `test` and its tag will be `pandas`. If the tag isn't specified it will default to `latest`.
+* `-t`, or `-tag`, denotes the argument for a tag. The image name will be `test` and its tag will be `pandas`. If the tag isn't specified it will default to `latest`. 
 
 We can now run the container and pass an argument to it, so that our pipeline will receive it:
 
 ```ssh
 docker run -it test:pandas some_number
 ```
-
-You should get the same output you did when you ran the pipeline script by itself.
+* The `-it` argument implies that you want an interactive session.
+* You should get the same output you did when you ran the pipeline script by itself.
 
 >Note: It is important to note that the config file needs to be named 'Dockerfile' with no extension and also you need to run "docker build -t test:pandas ." from the directory where you saved this file. These instructions asume that `pipeline.py` and `Dockerfile` are in the same directory. The Docker commands should also be run from the same directory as these files.
 
