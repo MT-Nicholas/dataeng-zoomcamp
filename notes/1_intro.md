@@ -72,15 +72,25 @@ Docker containers are ***stateless***: any changes done inside a container will 
 
 >Note: you can learn more about Docker and how to set it up on a Mac [in this link](https://github.com/ziritrion/ml-zoomcamp/blob/11_kserve/notes/05b_virtenvs.md#docker). You may also be interested in a [Docker reference cheatsheet](https://gist.github.com/ziritrion/1842c8a4c4851602a8733bba19ab6050#docker).
 
+## Way of Working
+
+Note that the way we will be working is as follows:
+- We have created a **GitHub repo** (forked from notes made available by a third-party)
+- The GitHub repo is hosted on **Codespaces**
+- We are editing the Codespace through **Visual Studio Code**
+- Within VS Code, we have a **terminal**, which we can use for bash script, etc.
+- Within VS Code, we have extensions for **Python**, **Docker**, etc. and which we can use for all scripting
+- A folder with working scripts will be created for each lesson, in the format *{lesson_number}_{lesson_name}*
+
 ## Creating a custom pipeline with Docker
 
+### Python Script
 _([Video source](https://www.youtube.com/watch?v=EYNwNlOrpr0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=3))_
 
 Let's create an example pipeline. We will create a dummy `pipeline.py` Python script that receives an argument and prints it.
 
 ```python
 import sys
-import pandas # we don't need this but it's useful for the example
 
 # print arguments
 print(sys.argv)
@@ -99,42 +109,60 @@ We can run this script with `python pipeline.py <some_number>` and it should pri
 * `['pipeline.py', '<some_number>']`
 * `job finished successfully for day = <some_number>`
 
-Let's containerize it by creating a Docker image. Create the folllowing `Dockerfile` file:
+### Dockerfile
+
+> To use Docker, we can use **Docker desktop** directly, or else use Docker through extensions from within **VS Code**.
+
+> Docker is used to create containers; a container functions as a server, and in fact we can the front-end of the container through a web browser. 
+
+> A container requires a name, and a host port.  Your local machine, in technical terms, is also referred to as “localhost”. Ref: [What is local host?](https://blog.hubspot.com/website/what-is-localhost)
+Thus, if hosting a container on your own local machine, you will be able to access the front-end using http://localhost: 
+
+Let's containerize our Python script by creating a Docker image. Create the folllowing `Dockerfile` file:
+
+**Important Notes:**
+- You always need an image to run a container.  Therefore we will first build an image, and then run a container using the image.
+- A Dockerfile is the Docker image's source code. Thus, by running the same Dockerfile, the same identical container can be instantiated
+- Reference material on syntax [1](https://www.geeksforgeeks.org/what-is-dockerfile-syntax/) and [2](https://docs.docker.com/engine/reference/builder/) for Dockerfiles
+- **VVIMP**: A standard Dockerfile should be named `Dockerfile` (by default) and should have no extension (e.g. `.txt`)! Therefore make sure your file is not named `Dockerfile.txt` , especially since file extensions are hidden by default on Windows.
 
 ```dockerfile
-# base Docker image that we will build on
+# every Dockerfile starts with the base Docker image that we will build on
 FROM python:3.9.1
 
-# set up our image by installing prerequisites; pandas in this case
+# set up our image by installing prerequisite environment configurations; pandas in this case
 RUN pip install pandas
 
-# set up the working directory inside the container
+# set up the working directory inside the container (standard procedure)
 WORKDIR /app
-# copy the script to the container. 1st name is source file, 2nd is destination
+# copy the script to the container: 1st name is source file, 2nd is destination (not sure about this)
 COPY pipeline.py pipeline.py
 
 # define what to do first when the container runs
 # in this example, we will just run the script
-ENTRYPOINT ["python", "pipeline.py"]
+# i.e. we are 'automating' the terminal input of "python", "pipeline.py"
+ENTRYPOINT ["python pipeline.py"]
 ```
-
+#### Build Image
 Let's build the image:
-
 
 ```ssh
 docker build -t test:pandas .
 ```
-* `-t`, or `-tag`, denotes the argument for a tag. The image name will be `test` and its tag will be `pandas`. If the tag isn't specified it will default to `latest`. 
+* `-t`, or `-tag`, denotes the argument for a tag, as follows: The image name will be `test` and its tag will be `pandas`. If the tag isn't specified it will default to `latest`. 
+* note that we are required to provide the location of the Dockerfile; in this case, we are going to navigate to the Dockerfile's directory using `cd` prior to running `docker build ...` and will specify the location as `.` which means 'the current directory'
 
-We can now run the container and pass an argument to it, so that our pipeline will receive it:
+#### Run Container (using Image)
+We can now run the container image and pass an argument to it, so that our pipeline will receive it:
 
 ```ssh
 docker run -it test:pandas some_number
 ```
 * The `-it` argument implies that you want an interactive session. This means that you can interact with the session and, for example use `Ctrl+C` to quit the session.
+* We reference the image by `name:tag`, as specified when built
 * You should get the same output you did when you ran the pipeline script by itself.
 
->Note: It is important to note that the config file needs to be named 'Dockerfile' with no extension and also you need to run "docker build -t test:pandas ." from the directory where you saved this file. These instructions asume that `pipeline.py` and `Dockerfile` are in the same directory. The Docker commands should also be run from the same directory as these files.
+>Note: It is important to note that the config file needs to be named 'Dockerfile' with no extension and also you need to run the docker commnds (`docker build ...` and `docker run ...`) from the directory where you saved this file; therefore you must first `cd` into the right directory. These instructions are assuming that `pipeline.py` and `Dockerfile` are in the same directory.
 
 ## Running Postgres in a container
 
@@ -145,6 +173,8 @@ In later parts of the course we will use Airflow, which uses PostgreSQL internal
 You can run a containerized version of Postgres that doesn't require any installation steps. You only need to provide a few _environment variables_ to it as well as a _volume_ for storing data.
 
 Create a folder anywhere you'd like for Postgres to store data in. We will use the example folder `ny_taxi_postgres_data`. Here's how to run the container:
+
+> Note that [`docker run`](https://docs.docker.com/engine/reference/commandline/container_run/) can be used to run a 'custom' docker image that was developed and built prior, or else to run a pre-configured image. [Docker Hub](http://hub.docker.com/) has over 100,000 images created by developers that you can run locally. You can search for Docker Hub images and run them directly from Docker Desktop. Many images hosted on Docker Hub have a description that highlights what settings must be set in order to run them. It will take some time to download the first time, but will be cached for future use. 
 
 ```bash
 docker run -it \
@@ -160,6 +190,7 @@ docker run -it \
     * `POSTGRES_PASSWORD` is the password for the database. We chose `root`
         * ***IMPORTANT: These values are only meant for testing. Please change them for any serious project.***
     * `POSTGRES_DB` is the name that we will give the database. We chose `ny_taxi`.
+* the `-e` (or `-env`) is for specifying environmental variables
 * `-v` points to the volume directory. The colon `:` separates the first part (path to the folder in the host computer) from the second part (path to the folder inside the container).
     * Path names must be absolute. If you're in a UNIX-like system, you can use `pwd` to print you local folder as a shortcut; this example should work with both `bash` and `zsh` shells, but `fish` will require you to remove the `$`.
     * This command will only work if you run it from a directory which contains the `ny_taxi_postgres_data` subdirectory you created above.
