@@ -327,6 +327,7 @@ Under Quick Links, navigate to "Add New Server" ..._
 Under _General_ give the Server a name and under _Connection_ add the same host name, user and password you used when running the container.
 > Host name/address = DB name; this is required so that pgadmin finds the DB
 
+**Fix steps**
 ![steps](images/01_03.png)
 ![steps](images/01_04.png)
 
@@ -339,7 +340,7 @@ We will explore using pgAdmin in later lessons.
 
 ## Accessing PostGres DB with Python and Jupyter
 
-**CLARIFY:** As an alternative to accessing PostGres using `pgcli`, which may require some additional config not discussed above, we can access it directly using Python and Jupyter.
+**CONTINUE HERE AND FIRST CLARIFY -- WE ALREADY SPOKE ABOVE ABOUT HOW WE CAN AVOID PGCLI FOR DB ADMIN USING GUI OF PGADMIN, SO WHAT ARE WE SAYING HERE?:** As an alternative to accessing PostGres using `pgcli`, which may require some additional config not discussed above, we can access it directly using Python and Jupyter.
 
 ## Ingesting data to Postgres with Python
 
