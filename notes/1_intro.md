@@ -131,7 +131,7 @@ We can now run the container and pass an argument to it, so that our pipeline wi
 ```ssh
 docker run -it test:pandas some_number
 ```
-* The `-it` argument implies that you want an interactive session.
+* The `-it` argument implies that you want an interactive session. This means that you can interact with the session and, for example use `Ctrl+C` to quit the session.
 * You should get the same output you did when you ran the pipeline script by itself.
 
 >Note: It is important to note that the config file needs to be named 'Dockerfile' with no extension and also you need to run "docker build -t test:pandas ." from the directory where you saved this file. These instructions asume that `pipeline.py` and `Dockerfile` are in the same directory. The Docker commands should also be run from the same directory as these files.
@@ -167,7 +167,7 @@ docker run -it \
 * The `-p` is for port mapping. We map the default Postgres port to the same port in the host.
 * The last argument is the image name and tag. We run the official `postgres` image on its version `13`.
 
-Once the container is running, we can log into our database with [pgcli](https://www.pgcli.com/) with the following command:
+The [pgcli](https://www.pgcli.com/) client is an interactive command-line interface for Postgres. Once the Docker container is running, we can log into our database through pgcli with the following command:
 
 ```bash
 pgcli -h localhost -p 5432 -u root -d ny_taxi
@@ -190,11 +190,26 @@ We will use data from the [NYC TLC Trip Record Data website](https://www1.nyc.go
 
 Check the completed `upload-data.ipynb` [in this link](../1_intro/upload-data.ipynb) for a detailed guide. Feel free to copy the file to your work directory; in the same directory you will need to have the CSV file linked above and the `ny_taxi_postgres_data` subdirectory.
 
+Alternatively, it is also possible to use SQLAlchemy to connect with pandas to the instance of Postgres, as shown in _([this video](https://www.youtube.com/watch?v=3IkfkTwqHx4&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
+
 ## Connecting pgAdmin and Postgres with Docker networking
+
+
 
 _([Video source](https://www.youtube.com/watch?v=hCAIVe9N0ow&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=5))_
 
-`pgcli` is a handy tool but it's cumbersome to use. [`pgAdmin` is a web-based tool](https://www.pgadmin.org/) that makes it more convenient to access and manage our databases. It's possible to run pgAdmin as as container along with the Postgres container, but both containers will have to be in the same _virtual network_ so that they can find each other.
+`pgcli` is a handy tool but it's cumbersome to use. [`pgAdmin` is a web-based tool](https://www.pgadmin.org/) that makes it more convenient to access and manage our databases. Similarly here, we could install pgAdmin locally ... but we could also install it in a dedicated Docker container, by pulling in a Docker image that contains the tool. In fact, it's possible to run pgAdmin as as container along with the Postgres container, but both containers will have to be in the same _virtual network_ so that they can find each other.
+
+A quick google search of `pgadmin docker` will bring up the official page from `pgadmin` website. We can click download > Docker, to get instructions on how to download docker image, available [here](https://www.pgadmin.org/download/pgadmin-4-container/), which links us to the Docker documentation available [here](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html). From here, we get the command we need to use to get the pgadmin image:
+
+``` bash
+docker pull dpage/pgadmin4:<tag name>
+```
+
+However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) and that they are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
+![Alt text](image.png)
+
+Once again, quick google search for `docker network create` gives us the following [guidance](https://docs.docker.com/engine/reference/commandline/network_create/).
 
 Let's create a virtual Docker network called `pg-network`:
 
@@ -202,9 +217,11 @@ Let's create a virtual Docker network called `pg-network`:
 docker network create pg-network
 ```
 
->You can remove the network later with the command `docker network rm pg-network` . You can look at the existing networks with `docker network ls` .
+That's all it takes to create a network! You can look at the existing networks with `docker network ls`.
 
-We will now re-run our Postgres container with the added network name and the container network name, so that the pgAdmin container can find it (we'll use `pg-database` for the container name):
+>You can remove the network later with the command `docker network rm pg-network` . 
+
+We will now re-run (i.e. re-create) our `Postgres container` with the added network name and the container network name, so that the pgAdmin container can later find it from the same network (we'll use `pg-database` for the container name).
 
 ```bash
 docker run -it \
@@ -218,7 +235,7 @@ docker run -it \
     postgres:13
 ```
 
-We will now run the pgAdmin container on another terminal:
+And now, we will now run the `pgAdmin container` on another terminal on the same network:
 
 ```bash
 docker run -it \
@@ -229,6 +246,7 @@ docker run -it \
     --name pgadmin \
     dpage/pgadmin4
 ```
+Notes:
 * The container needs 2 environment variables: a login email and a password. We use `admin@admin.com` and `root` in this example.
  * ***IMPORTANT: these are example values for testing and should never be used on production. Change them accordingly when needed.***
 * pgAdmin is a web app and its default port is 80; we map it to 8080 in our localhost to avoid any possible conflicts.
@@ -255,11 +273,11 @@ We will explore using pgAdmin in later lessons.
 
 _([Video source](https://www.youtube.com/watch?v=B1WwATwf-vY&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=8))_
 
-We will now export the Jupyter notebook file to a regular Python script and use Docker to run it.
+We will now export the Jupyter notebook file to a regular Python script (i.e. remove all the 'notebook clutter' and convert to a .py script) and then run it using Docker as part of our automated pipeline.
 
 ### Exporting and testing the script
 
-You can export the `ipynb` file to `py` with this command:
+If using jupyter notebooks for progamming in python, you can export the `.ipynb` notebook file as a `.py` with this command:
 
 ```bash
 jupyter nbconvert --to=script upload-data.ipynb
@@ -904,6 +922,8 @@ If you cannot set up a local development environment, you may use part of the $3
 ## Port mapping and networks in Docker
 
 If you're having issues with Docker and networking (especially if you already have Postgres running locally in your host computer), a [videoguide is also available](https://www.youtube.com/watch?v=tOr4hTsHOzU).
+
+The video also explains network, architecture, and port mappings.
 
 _[Back to the top](#table-of-contents)_
 
