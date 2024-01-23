@@ -198,7 +198,26 @@ docker run -it \
 * The `-p` is for port mapping. We map the default Postgres port to the same port in the host.
 * The last argument is the image name and tag. We run the official `postgres` image on its version `13`.
 
+### Viewing all active Docker containers
+
+To view all  Docker containers, we can use
+```bash
+docker ps       # view all active containers
+docker ps -a    # view all active and non-active containers (history)
+```
+
+### Remove Docker containers
+Quite clearly, you should stop the docker container first and then remove it:
+``` bash
+docker stop container_id_or_name
+docker rm container_id_or_name
+```
+> Note that we can also specify multiple containers in a one-liner
+
+## Accessing PostGres DB using pgcli (SKIP)
 The [pgcli](https://www.pgcli.com/) client is an interactive command-line interface for Postgres. Once the Docker container is running, we can log into our database through pgcli with the following command:
+
+> `psql` is the default command-line front end to PostgreSQL, but `pgcli` provides a more intuitive interface
 
 ```bash
 pgcli -h localhost -p 5432 -u root -d ny_taxi
@@ -209,21 +228,7 @@ pgcli -h localhost -p 5432 -u root -d ny_taxi
 * `-d` is the database name.
 * The password is not provided; it will be requested after running the command.
 
-## Ingesting data to Postgres with Python
-
-_([Video source](https://www.youtube.com/watch?v=2JM-ziJt0WI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=4))_
-
-We will now create a Jupyter Notebook `upload-data.ipynb` file which we will use to read a CSV file and export it to Postgres.
-
-We will use data from the [NYC TLC Trip Record Data website](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). Specifically, we will use the [Yellow taxi trip records CSV file for January 2021](https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-01.csv). A dictionary to understand each field is available [here](https://www1.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf).
-
->Note: knowledge of Jupyter Notebook, Python environment management and Pandas is asumed in these notes. Please check [this link](https://gist.github.com/ziritrion/9b80e47956adc0f20ecce209d494cd0a#pandas) for a Pandas cheatsheet and [this link](https://gist.github.com/ziritrion/8024025672ea92b8bdeb320d6015aa0d) for a Conda cheatsheet for Python environment management.
-
-Check the completed `upload-data.ipynb` [in this link](../1_intro/upload-data.ipynb) for a detailed guide. Feel free to copy the file to your work directory; in the same directory you will need to have the CSV file linked above and the `ny_taxi_postgres_data` subdirectory.
-
-Alternatively, it is also possible to use SQLAlchemy to connect with pandas to the instance of Postgres, as shown in _([this video](https://www.youtube.com/watch?v=3IkfkTwqHx4&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
-
-## Connecting pgAdmin and Postgres with Docker networking
+## Connecting pgAdmin and Postgres with Docker networking and Docker Volume
 
 
 
@@ -234,10 +239,12 @@ _([Video source](https://www.youtube.com/watch?v=hCAIVe9N0ow&list=PL3MmuxUbc_hJe
 A quick google search of `pgadmin docker` will bring up the official page from `pgadmin` website. We can click download > Docker, to get instructions on how to download docker image, available [here](https://www.pgadmin.org/download/pgadmin-4-container/), which links us to the Docker documentation available [here](https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html). From here, we get the command we need to use to get the pgadmin image:
 
 ``` bash
-docker pull dpage/pgadmin4:<tag name>
+docker pull dpage/pgadmin4:<tag name>   # default tag name is `latest` i.e. most recent
 ```
+> Note this step is not required, since when you run an image which is not available already, Docker will automatically attempt to pull the latest version. However, explicitly using docker pull can be useful when you want to ensure you have the latest version of the image or if you prefer to pull it separately for any reason.
 
-However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) and that they are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
+### Docker network
+However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
 ![Alt text](image.png)
 
 Once again, quick google search for `docker network create` gives us the following [guidance](https://docs.docker.com/engine/reference/commandline/network_create/).
@@ -248,18 +255,39 @@ Let's create a virtual Docker network called `pg-network`:
 docker network create pg-network
 ```
 
-That's all it takes to create a network! You can look at the existing networks with `docker network ls`.
+That's all it takes to create a network! You can look at the existing networks with `docker network ls`. You can remove the network later with the command `docker network rm pg-network`. 
 
->You can remove the network later with the command `docker network rm pg-network` . 
+### Docker Volume
 
-We will now re-run (i.e. re-create) our `Postgres container` with the added network name and the container network name, so that the pgAdmin container can later find it from the same network (we'll use `pg-database` for the container name).
+Recall how a Docker container is not persistent. However, in the context of creating a Database, having persistent storage is desirable.
+- A `Docker volume` is a way to persistently store data generated by a Docker container. It is a separate entity from the container itself and exists independently.
+- Volumes are used to share data between containers or to persist data even if the container is removed.
+- Volumes can offer better performance than using **bind mounts** (local directories) because they are managed by Docker and can be optimized for specific use cases.
+- Docker volumes therefore provide a more robust and flexible solution for handling persistent data in Docker containers compared to local directories.
+
+Let's create a virtual Docker volume called `dtc_postgres_volume_local`:
+
+```bash
+docker volume create dtc_postgres_volume_local
+```
+
+That's all it takes to create a volume! You can look at the existing networks with `docker volume ls`. You can remove the network later with the command `docker volume rm dtc_postgres_volume_local`. 
+
+### View Docker Items (?)
+
+To view Docker Items (?), navigate here from VS Studio Code Docker Extension:
+
+![Alt text](./images/error-network.png)
+
+### Re-running containers with Docker networking, and Docker Volumes
+We will now re-run (i.e. re-create) our `Postgres container` with the added network, so that the pgAdmin container can later find it from the same network (we'll use `pg-database` for the container name). We will also use the docker volume for storage
 
 ```bash
 docker run -it \
     -e POSTGRES_USER="root" \
     -e POSTGRES_PASSWORD="root" \
     -e POSTGRES_DB="ny_taxi" \
-    -v $(pwd)/ny_taxi_postgres_data:/var/lib/postgresql/data \
+    -v dtc_postgres_volume_local:/var/lib/postgresql/data \
     -p 5432:5432 \
     --network=pg-network \
     --name pg-database \
@@ -278,26 +306,54 @@ docker run -it \
     dpage/pgadmin4
 ```
 Notes:
-* The container needs 2 environment variables: a login email and a password. We use `admin@admin.com` and `root` in this example.
- * ***IMPORTANT: these are example values for testing and should never be used on production. Change them accordingly when needed.***
-* pgAdmin is a web app and its default port is 80; we map it to 8080 in our localhost to avoid any possible conflicts.
-* Just like with the Postgres container, we specify a network and a name. However, the name in this example isn't really necessary because there won't be any containers trying to access this particular container.
-* The actual image name is `dpage/pgadmin4` .
+* The container needs 2 environment variables: a login email and a password. We use `admin@admin.com` and `root` in this example. These are example values for testing and should never be used on production. Change them accordingly when needed.
+* **Ports**: pgAdmin is a web app and its default port is 80; we map it to 8080 in our localhost to avoid any possible conflicts.
+* **Network**: Just like with the Postgres container, we specify the network.
+* **Name**: We also specify a container name; however, the name in this example isn't really necessary because there won't be any containers trying to access this particular container (rather, it is this container which will attempt to access the others)
+* The actual image name for the pgadmin tool is `dpage/pgadmin4` .
 
 You should now be able to load pgAdmin on a web browser by browsing to `localhost:8080`. Use the same email and password you used for running the container to log in.
 
-Right-click on _Servers_ on the left sidebar and select _Create_ > _Server..._
+Note that we can also view a list of ports by going to:
 
-![steps](images/01_02.png)
+![image](./images/ports.png)
+
+### Connecting PostGres DB to PGAdmin by Adding Server
+
+Under Quick Links, navigate to "Add New Server" ..._
+
+![Alt text](./images/pg_create_server.png)
 
 Under _General_ give the Server a name and under _Connection_ add the same host name, user and password you used when running the container.
+> Host name/address = DB name; this is required so that pgadmin finds the DB
 
 ![steps](images/01_03.png)
 ![steps](images/01_04.png)
 
 Click on _Save_. You should now be connected to the database.
 
+![Alt text](.\image\pg_connected.png)
+
 We will explore using pgAdmin in later lessons.
+
+
+## Accessing PostGres DB with Python and Jupyter
+
+**CLARIFY:** As an alternative to accessing PostGres using `pgcli`, which may require some additional config not discussed above, we can access it directly using Python and Jupyter.
+
+## Ingesting data to Postgres with Python
+
+_([Video source](https://www.youtube.com/watch?v=2JM-ziJt0WI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=4))_
+
+We will now create a Jupyter Notebook `upload-data.ipynb` file which we will use to read a CSV file and export it to Postgres.
+
+We will use data from the [NYC TLC Trip Record Data website](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). Specifically, we will use the [Yellow taxi trip records CSV file for January 2021](https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-01.csv). A dictionary to understand each field is available [here](https://www1.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf).
+
+>Note: knowledge of Jupyter Notebook, Python environment management and Pandas is asumed in these notes. Please check [this link](https://gist.github.com/ziritrion/9b80e47956adc0f20ecce209d494cd0a#pandas) for a Pandas cheatsheet and [this link](https://gist.github.com/ziritrion/8024025672ea92b8bdeb320d6015aa0d) for a Conda cheatsheet for Python environment management.
+
+Check the completed `upload-data.ipynb` [in this link](../1_intro/upload-data.ipynb) for a detailed guide. Feel free to copy the file to your work directory; in the same directory you will need to have the CSV file linked above and the `ny_taxi_postgres_data` subdirectory.
+
+Alternatively, it is also possible to use SQLAlchemy to connect with pandas to the instance of Postgres, as shown in _([this video](https://www.youtube.com/watch?v=3IkfkTwqHx4&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
 
 
 ## Using the ingestion script with Docker
