@@ -34,7 +34,7 @@
 
 During the course we will replicate the following architecture:
 
-![architecture diagram](https://github.com/DataTalksClub/data-engineering-zoomcamp/raw/main/images/architecture/arch_1.jpg)
+![architecture diagram](../Reference_Material/images/01_01.jpg)
 
 * [New York's Taxi and Limousine Corporation's Trip Records Dataset](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/dataset.md): the dataset we will use during the course.
 * [Spark](https://spark.apache.org/): analytics engine for large-scale data processing (distributed processing).
@@ -46,7 +46,8 @@ During the course we will replicate the following architecture:
 
 A **data pipeline** is a service that receives data as input and outputs more data. For example, reading a CSV file, transforming the data somehow and storing it as a table in a PostgreSQL database.
 
-![data pipeline](images/01_01.png)
+![data pipeline](../Reference_Material/images/01_01.png)
+
 
 _[Back to the top](#table-of-contents)_
 
@@ -241,7 +242,7 @@ A quick google search of `pgadmin docker` will bring up the official page from `
 ``` bash
 docker pull dpage/pgadmin4:<tag name>   # default tag name is `latest` i.e. most recent
 ```
-> Note this step is not required, since when you run an image which is not available already, Docker will automatically attempt to pull the latest version. However, explicitly using docker pull can be useful when you want to ensure you have the latest version of the image or if you prefer to pull it separately for any reason.
+> Note this step is **not required**, since when you run an image which is not available already, Docker will automatically attempt to pull the latest version. However, explicitly using docker pull can be useful when you want to ensure you have the latest version of the image or if you prefer to pull it separately for any reason.
 
 ### Docker network
 However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
@@ -277,7 +278,15 @@ That's all it takes to create a volume! You can look at the existing networks wi
 
 To view Docker Items (?), navigate here from VS Studio Code Docker Extension:
 
-![Alt text](./images/error-network.png)
+![Alt text](./images/docker-items.png)
+
+### Re-starting Inactive Containers
+
+After some time, Docker containers will 'stop' automatically (i.e. sleep). You can also stop them manually.
+
+To re-start, can use terminal or GUI as follows from Docker pane:
+
+![Alt text](./images/docker-start.png)
 
 ### Re-running containers with Docker networking, and Docker Volumes
 We will now re-run (i.e. re-create) our `Postgres container` with the added network, so that the pgAdmin container can later find it from the same network (we'll use `pg-database` for the container name). We will also use the docker volume for storage
@@ -328,50 +337,57 @@ Under _General_ give the Server a name and under _Connection_ add the same host 
 > Host name/address = DB name; this is required so that pgadmin finds the DB
 
 **Fix steps**
-![steps](images/01_03.png)
-![steps](images/01_04.png)
+![steps](../Reference_Material/images/01_03.png)
+![steps](../Reference_Material/images/01_04.png)
 
 Click on _Save_. You should now be connected to the database.
 
-![Alt text](.\image\pg_connected.png)
+![Alt text](.\images\pg_connected.png)
 
 We will explore using pgAdmin in later lessons.
 
 
-## Accessing PostGres DB with Python and Jupyter
-
-**CONTINUE HERE AND FIRST CLARIFY -- WE ALREADY SPOKE ABOVE ABOUT HOW WE CAN AVOID PGCLI FOR DB ADMIN USING GUI OF PGADMIN, SO WHAT ARE WE SAYING HERE?:** As an alternative to accessing PostGres using `pgcli`, which may require some additional config not discussed above, we can access it directly using Python and Jupyter.
-
-## Ingesting data to Postgres with Python
+## Ingesting data to Postgres with Python (using `pd.to_sql()`)
 
 _([Video source](https://www.youtube.com/watch?v=2JM-ziJt0WI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=4))_
 
-We will now create a Jupyter Notebook `upload-data.ipynb` file which we will use to read a CSV file and export it to Postgres.
+We will now create a Jupyter Notebook `upload-data.ipynb` [in this link](../1_intro/upload-data.ipynb) file which we will use to read a single 'sample' data file, and export it to Postgres.
 
-We will use data from the [NYC TLC Trip Record Data website](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). Specifically, we will use the [Yellow taxi trip records CSV file for January 2021](https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-01.csv). A dictionary to understand each field is available [here](https://www1.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf).
+We will use data from the [NYC TLC Trip Record Data website](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). Specifically, we will use the **Yellow taxi trip records CSV file for January 2021**. A dictionary to understand each field is available [here](https://www1.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf).
+
+In the same directory of the .`ipynb` you will need to have the CSV file linked above _(and the `ny_taxi_postgres_data` subdirectory (?))_.
+
+> Note that the file type is .parquet, which can be converted to .csv by Pandas automatically.
 
 >Note: knowledge of Jupyter Notebook, Python environment management and Pandas is asumed in these notes. Please check [this link](https://gist.github.com/ziritrion/9b80e47956adc0f20ecce209d494cd0a#pandas) for a Pandas cheatsheet and [this link](https://gist.github.com/ziritrion/8024025672ea92b8bdeb320d6015aa0d) for a Conda cheatsheet for Python environment management.
 
-Check the completed `upload-data.ipynb` [in this link](../1_intro/upload-data.ipynb) for a detailed guide. Feel free to copy the file to your work directory; in the same directory you will need to have the CSV file linked above and the `ny_taxi_postgres_data` subdirectory.
+## Interfacing with Postgres DB
+Throughout this course, three alternative ways of interfacing with Postgres DB are discussed:
+1. Using `pgcli`, a terminal command-line interface [not recommended, lots of config required]
+2. Using `pgadmin` GUI interface [**recommended**] (refer to `upload-data.ipynb`)
+3. Using `SQLAlchemy` python interface via `pd.read_sql()` [**recommended**] (refer to `upload-data.ipynb`)
 
-Alternatively, it is also possible to use SQLAlchemy to connect with pandas to the instance of Postgres, as shown in _([this video](https://www.youtube.com/watch?v=3IkfkTwqHx4&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
+For more on SQL Alchemy, refer to ([this video](https://www.youtube.com/watch?v=3IkfkTwqHx4&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))
 
 
 ## Using the ingestion script with Docker
 
 _([Video source](https://www.youtube.com/watch?v=B1WwATwf-vY&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=8))_
 
-We will now export the Jupyter notebook file to a regular Python script (i.e. remove all the 'notebook clutter' and convert to a .py script) and then run it using Docker as part of our automated pipeline.
+We will now prepare the regular python sript (i.e. removed from all the 'notebook clutter' from the .ipynb and converted to a .py) and run it using Docker as part of our automated pipeline.
 
 ### Exporting and testing the script
 
-If using jupyter notebooks for progamming in python, you can export the `.ipynb` notebook file as a `.py` with this command:
+If using jupyter notebooks for progamming in python, you can export the `.ipynb` notebook file as a `.py` with the below command. The file will be generated in the same directory.
 
 ```bash
 jupyter nbconvert --to=script upload-data.ipynb
 ```
 
-Clean up the script by removing everything we don't need. We will also rename it to `ingest_data.py` and add a few modifications:
+Clean up the script by removing everything we don't need (e.g. `print` statements, etc.).
+
+We will also rename it to `ingest_data.py` and add a few modifications:
+
 * We will use [argparse](https://docs.python.org/3/library/argparse.html) to handle the following command line arguments:
     * Username
     * Password
@@ -380,11 +396,14 @@ Clean up the script by removing everything we don't need. We will also rename it
     * Database name
     * Table name
     * URL for the CSV file
+> The `argparse` module makes it easy to write user-friendly **command-line interfaces**. The program (i.e. the python script)can define what arguments it requires on-the-fly, and `argparse` will parse the `params` out of `sys.argv` as per the configuration provided (ref: `ingest_data.py`).
+* We also create the `if __name__ == '__main__'` clause for best-practice. This is where we also configure `argparse`.
 * The _engine_ we created for connecting to Postgres will be tweaked so that we pass the parameters and build the URL from them, like this:
     ```python
     engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
     ```
 * We will also download the CSV using the provided URL argument.
+
 
 You can check the completed `ingest_data.py` script [in this link](../1_intro/ingest_data.py).
 
@@ -404,11 +423,11 @@ python ingest_data.py \
     --port=5432 \
     --db=ny_taxi \
     --table_name=yellow_taxi_trips \
-    --url="https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-01.csv"
+    --url="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 ```
-* Note that we've changed the table name from `yellow_taxi_data` to `yellow_taxi_trips`.
+**Note that we've changed the table name from `yellow_taxi_data` to `yellow_taxi_trips`.**
 
-Back in pgAdmin, refresh the Tables and check that `yellow_taxi_trips` was created. You can also run a SQL query to check the contents:
+Back in pgAdmin, refresh the Tables (right-click > Refresh) and check that `yellow_taxi_trips` was created. You can also run a SQL query to check the contents:
 
 ```sql
 SELECT
@@ -418,7 +437,7 @@ FROM
 ```
 * This query should return 1,369,765 rows.
 
-### Dockerizing the script
+### CONTINUE: Dockerizing the script
 
 Let's modify the [Dockerfile we created before](#creating-a-custom-pipeline-with-docker) to include our `ingest_data.py` script and create a new image:
 
