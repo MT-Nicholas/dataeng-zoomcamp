@@ -196,6 +196,7 @@ docker run -it \
     * Path names must be absolute. If you're in a UNIX-like system, you can use `pwd` to print you local folder as a shortcut; this example should work with both `bash` and `zsh` shells, but `fish` will require you to remove the `$`.
     * This command will only work if you run it from a directory which contains the `ny_taxi_postgres_data` subdirectory you created above.
     * If you are operating on windows, you need to provide the full absolute directory, in the format `c:\...\...`
+    * Note that the `\` symbol lets us do a line break
 * The `-p` is for port mapping. We map the default Postgres port to the same port in the host.
 * The last argument is the image name and tag. We run the official `postgres` image on its version `13`.
 
@@ -278,7 +279,7 @@ That's all it takes to create a volume! You can look at the existing networks wi
 
 To view Docker Items (?), navigate here from VS Studio Code Docker Extension:
 
-![Alt text](./images/docker-items.png)
+![Alt text](./images/1_docker-items.png)
 
 ### Re-starting Inactive Containers
 
@@ -286,7 +287,7 @@ After some time, Docker containers will 'stop' automatically (i.e. sleep). You c
 
 To re-start, can use terminal or GUI as follows from Docker pane:
 
-![Alt text](./images/docker-start.png)
+![Alt text](./images/1_docker-start.png)
 
 ### Re-running containers with Docker networking, and Docker Volumes
 We will now re-run (i.e. re-create) our `Postgres container` with the added network, so that the pgAdmin container can later find it from the same network (we'll use `pg-database` for the container name). We will also use the docker volume for storage
@@ -325,13 +326,13 @@ You should now be able to load pgAdmin on a web browser by browsing to `localhos
 
 Note that we can also view a list of ports by going to:
 
-![image](./images/ports.png)
+![image](./images/1_ports.png)
 
 ### Connecting PostGres DB to PGAdmin by Adding Server
 
 Under Quick Links, navigate to "Add New Server" ..._
 
-![Alt text](./images/pg_create_server.png)
+![Alt text](./images/1_pg_create_server.png)
 
 Under _General_ give the Server a name and under _Connection_ add the same host name, user and password you used when running the container.
 > Host name/address = DB name; this is required so that pgadmin finds the DB
@@ -342,7 +343,7 @@ Under _General_ give the Server a name and under _Connection_ add the same host 
 
 Click on _Save_. You should now be connected to the database.
 
-![Alt text](.\images\pg_connected.png)
+![Alt text](.\images\1_pg_connected.png)
 
 We will explore using pgAdmin in later lessons.
 
@@ -437,16 +438,16 @@ FROM
 ```
 * This query should return 1,369,765 rows.
 
-### CONTINUE: Dockerizing the script
+### Dockerizing the script
 
-Let's modify the [Dockerfile we created before](#creating-a-custom-pipeline-with-docker) to include our `ingest_data.py` script and create a new image:
+Let's modify the [Dockerfile we created before](#creating-a-custom-pipeline-with-docker) to include our `ingest_data.py` script and create a new image (instead of our `pipeline.py` script)
 
 ```dockerfile
 FROM python:3.9.1
 
-# We need to install wget to download the csv file
+# In most Linux distributions, 'wget' comes pre-installed. If it's not, you can install it by running the command `apt-get install wget`. We need this to download the .csv file
 RUN apt-get install wget
-# psycopg2 is a postgres db adapter for python: sqlalchemy needs it
+# psycopg2 is a postgres db adapter for python: sqlalchemy needs it. It may be included with pandas and sqlalchemy, but better to be sure this way.
 RUN pip install pandas sqlalchemy psycopg2
 
 WORKDIR /app
@@ -454,8 +455,7 @@ COPY ingest_data.py ingest_data.py
 
 ENTRYPOINT [ "python", "ingest_data.py" ]
 ```
-
-Build the image:
+With our previous containers for `pgadmin` and `postgresdb` still running, build our new `ingest_data` image by running in terminal:
 ```bash
 docker build -t taxi_ingest:v001 .
 ```
@@ -465,25 +465,53 @@ And run it:
 docker run -it \
     --network=pg-network \
     taxi_ingest:v001 \
-    --user=root \
-    --password=root \
-    --host=pg-database \
-    --port=5432 \
-    --db=ny_taxi \
-    --table_name=yellow_taxi_trips \
-    --url="https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-01.csv"
+        --user=root \
+        --password=root \
+        --host=pg-database \
+        --port=5432 \
+        --db=ny_taxi \
+        --table_name=yellow_taxi_trips \
+        --url="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 ```
-* We need to provide the network for Docker to find the Postgres container. It goes before the name of the image.
-* Since Postgres is running on a separate container, the host argument will have to point to the container name of Postgres.
-* You can drop the table in pgAdmin beforehand if you want, but the script will automatically replace the pre-existing table.
+* We need to provide the `network` for Docker to find the Postgres container. It goes before the name of the image. `network` is a parameter for Docker whilst the other parameters are for our Python script. We can specify this using indenentation
+* Our Python script does not connect to the PGAdmin Container, but needs to connect to the PostgresDB container. Since Postgres is running on a separate container from the Python script, for which we are building a seperate container, the `host` argument should be changed to point to the container name of PostgresDB (rather than: `localhost`, as we saw previously -- because **when you use `localhost` in a container, this refers to the container itself!**).
+* You could have dropped any existing table of data in the PostgresDB via pgAdmin beforehand if you wanted, but the script will automatically replace the pre-existing table.
+* Note that in reality, rather than creating a `docker network` and accesssing a local database on our local network through `host`, we would have a database that runs on the cloud, and use the url of this database for the `host` parameter.
+* Moreover, note that rather than passing arugments through Docker, we could have e.g. Kubernetes job, Airflow, etc.
 
 ## Running Postgres and pgAdmin with Docker-compose
 
 _([Video source](https://www.youtube.com/watch?v=hKI6PkPhpa0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=7))_
 
-`docker-compose` allows us to launch multiple containers using a single configuration file, so that we don't have to run multiple complex `docker run` commands separately.
+So far, we are using three docker images to run three seperate docker containers: 1) `postgres`, 2) `pgadmin`, 3) `.py script`
 
-Docker compose makes use of YAML files. Here's the `docker-compose.yaml` file for running the Postgres and pgAdmin containers:
+`docker-compose` is a utility which allows us to **launch multiple containers using a single configuration file**, so that we don't have to run multiple complex `docker run` commands separately.
+
+> You can test whether `docker-compose` is installed by simply running `docker-compose` in terminal and checking if this generates an output.
+
+> Check out this [getting started guide](https://docs.docker.com/compose/gettingstarted/) for tips on `docker-compose`.
+
+> In a `docker-compose` file, we will prepare, in semi-structured format, a list of all the services we want to run, and the parameters for each service.
+
+Docker compose makes use of `YAML` files and must be denoted as `file-name.yaml`, in the format:
+
+```yaml
+services:
+    service1_name:
+        image:
+            # image name
+        environment:
+            # environment parameters
+        volume:
+            # host_path:container_path:mode mapping
+        ports:
+            # host_port:container_port mapping
+    service2_name:
+        ...
+```
+
+Here's the `docker-compose.yaml` file for running the `Postgres` and `pgAdmin` containers:
+
 
 ```yaml
 services:
@@ -507,19 +535,24 @@ services:
     ports:
       - "8080:80"
 ```
+* Note that there are two levels of parameters: parameters for the service (e.g. `image`, `volumes`, `port`), and parameters for the environment (e.g. `POSTGRES_USER`, `POSTGRES_PASSWORD`, etc.).
 * We don't have to specify a network because `docker-compose` takes care of it: every single container (or "service", as the file states) will run withing the same network and will be able to find each other according to their names (`pgdatabase` and `pgadmin` in this example).
-* We've added a volume for pgAdmin to save its settings, so that you don't have to keep re-creating the connection to Postgres every time ypu rerun the container. Make sure you create a `data_pgadmin` directory in your work folder where you run `docker-compose` from.
-* All other details from the `docker run` commands (environment variables, volumes and ports) are mentioned accordingly in the file following YAML syntax.
+* We have created and considerd a new volume for pgAdmin to save its settings, so that you don't have to keep re-creating the connection to Postgres every time you rerun the container. Make sure you create a `data_pgadmin` directory in your work folder where you run `docker-compose` from.
+* All other details from the `docker run` commands (environment variables, volumes and ports) are mentioned accordingly in the file following YAML syntax; we are re-organising the parameters in the docker scripts into a one single YAML file.
 
-We can now run Docker compose by running the following command from the same directory where `docker-compose.yaml` is found. Make sure that all previous containers aren't running anymore:
+We can now run Docker compose by running the following command from the same directory where `docker-compose.yaml` is found.
+
+**Make sure that all previous containers aren't running anymore, or else there may be conflicts**
 
 ```bash
 docker-compose up
 ```
 
->Note: this command asumes that the `ny_taxi_postgres_data` used for mounting the volume is in the same directory as `docker-compose.yaml`.
+>Note: this command asumes that the `ny_taxi_postgres_data` and `data_pgadmin` used for mounting the volumes are in the same directory as `docker-compose.yaml`.
 
-Since the settings for pgAdmin were stored within the container and we have killed the previous onem you will have to re-create the connection by following the steps [in this section](#connecting-pgadmin-and-postgres-with-docker-networking).
+Since the settings for pgAdmin were stored within the container and we have killed the previous one, you will have to re-connect PostGres DB to PGAdmin by Adding Server as seen in previous sections.
+
+![Alt text](.\images\1_pg_create_server_docker_compose.png)
 
 You will have to press `Ctrl+C` in order to shut down the containers. The proper way of shutting them down is with this command:
 
@@ -532,6 +565,11 @@ And if you want to run the containers again in the background rather than in the
 ```bash
 docker-compose up -d
 ```
+
+
+## Including .py data ingestion script in docker-compose
+
+**For some reason, this is not covered in detail ...**
 
 If you want to re-run the dockerized ingest script when you run Postgres and pgAdmin with `docker-compose`, you will have to find the name of the virtual network that Docker compose created for the containers. You can use the command `docker network ls` to find it and then change the `docker run` command for the dockerized script to include the network name.
 
@@ -785,20 +823,39 @@ _[Back to the top](#table-of-contents)_
 
 # Terraform and Google Cloud Platform
 
+## Terraform Introduction
+[Terraform](https://www.terraform.io/) is an [infrastructure as code](https://www.wikiwand.com/en/Infrastructure_as_code) tool.
 
-_([Video source](https://www.youtube.com/watch?v=Hajwnmj0xfQ&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
+It  allows us to provision infrastructure resources through code, thus making it possible to handle infrastructure as an additional software component and take advantage of tradtional software tools and utilities, such as version control.
 
-[Terraform](https://www.terraform.io/) is an [infrastructure as code](https://www.wikiwand.com/en/Infrastructure_as_code) tool that allows us to provision infrastructure resources as code, thus making it possible to handle infrastructure as an additional software component and take advantage of tools such as version control. It also allows us to bypass the cloud vendor GUIs.
+## Terraform Providers
+A provider in Terraform is a plugin that enables interaction with an API. This includes Cloud providers and Software-as-a-service providers. Most cloud providers (AWS, Azure, GCP) have Terraform providers, as seen on the list of providers on Terraform website.
 
+This means that, using Terraform, a company can easily manage its cloud infrastructure in a multi-cloud environment, in a single seamless experience.
+
+It also allows us to bypass the cloud vendor GUIs!
+
+> Terraform is cloud-agnostic and supports multiple cloud providers, and not just GCP. This means engineers can use the same Terraform code and workflows to manage infrastructure across different cloud platforms or even in hybrid cloud environments. This is not to mention the reproducibility it enables. Oh.. and it is easier for version control too. Lotta benefits.
+
+![Alt text](.\images\02_terraform.png)
+
+## Key Terraform Commands
+
+`init` - once providers are defined, init will bring the provider-related code to your machine
+`plan` - the infrastructure & resources which are planned to be created
+`apply` - run all infrastrcture defined in the `tf` (`terraform`) files
+`destory` - remove all infrastructure defined in the `tf` files
+
+> Note that it is helpful to install the `Hashicorp Terraform` extension on VSCode
+
+## GCP
 During this course we will use [Google Cloud Platform](https://cloud.google.com/) (GCP) as our cloud services provider.
 
 ## GCP initial setup
 
-_([Video source](https://www.youtube.com/watch?v=Hajwnmj0xfQ&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
+GCP is organized around *projects*. You may create a project and access all available GCP resources and services from the project dashboard.
 
-GCP is organized around _projects_. You may create a project and access all available GCP resources and services from the project dashboard.
-
-We will now create a project and a _service account_, and we will download the authentication keys to our computer. A _service account_ is like a user account but for apps and workloads; you may authorize or limit what resources are available to your apps with service accounts.
+We will now create a *project* and a *service account*, and we will download the authentication keys to our computer. A _service account_ is like a user account but for apps and workloads; you may authorize or limit what resources are available to your apps with service accounts. Usually, no users will log into a service account.
 
 >You can jump to the [next section](1_intro.md#gcp-setup-for-access) if you already know how to do this.
 
@@ -905,10 +962,11 @@ resource "google_compute_network" "vpc_network" {
     * About resource types:
         * The first prefix of the resource type maps to the name of the provider. For example, the resource type `google_compute_network` has the prefix `google` and thus maps to the provider `google`.
         * The resource types are defined in the Terraform documentation and refer to resources that cloud providers offer. In our example [`google_compute_network` (Terraform documentation link)](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) refers to GCP's [Virtual Private Cloud service](https://cloud.google.com/vpc).
-    * Resource names are the internal names that we use in our Terraform configurations to refer to each resource and have no impact on the actual infrastructure.
-    * The contents of a resource block are specific to the resource type. [Check the Terraform docs](https://registry.terraform.io/browse/providers) to see a list of resource types by provider.
+    * Resource names are the internal names that we use in **our Terraform configurations** to refer to each resource (and therefore these names have no impact on the actual infrastructure.)
+        * The contents of a resource block are specific to the resource type. [Check the Terraform docs](https://registry.terraform.io/browse/providers) to see a list of resource types by provider.
         * In this example, the `google_compute_network` resource type has a single mandatory argument called `name`, which is the name that the resource will have within GCP's infrastructure.
-            * Do not confuse the _resource name_ with the _`name`_ argument!
+            * Do not confuse the _resource name_ with the _`name`_ argument!!!
+> *Top tip*: assign a global unique name to the `name` argument using `project_name.resource_name`!
 
 Besides these 3 blocks, there are additional available blocks:
 
@@ -952,9 +1010,12 @@ With a configuration ready, you are now ready to create your infrastructure. The
 * `terraform init` : initialize your work directory by downloading the necessary providers/plugins.
 * `terraform fmt` (optional): formats your configuration files so that the format is consistent.
 * `terraform validate` (optional): returns a success message if the configuration is valid and no errors are apparent.
-* `terraform plan` :  creates a preview of the changes to be applied against a remote state, allowing you to review the changes before applying them.
+* `terraform plan` :  creates a preview of the changes to be applied against a remote state, allowing you to review the changes before applying them. 
+> `terraform plan` is especially useful to preview the default values for the parameters that have not been manually configured.
 * `terraform apply` : applies the changes to the infrastructure.
+> note that after running `terraform apply`, a `state` file (`.tfstate`) is created in the directory, which contains the `.tf` script plus additional back-ends details.
 * `terraform destroy` : removes your stack from the infrastructure.
+> note that after destroying, a `.tfstate.backup` file is created with a version history of the destroyed resources
 
 ## Creating GCP infrastructure with Terraform
 

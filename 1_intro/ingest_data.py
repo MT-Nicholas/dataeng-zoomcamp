@@ -21,7 +21,7 @@ def main(params):
     url = params.url
     csv_name = 'output.csv'
 
-    # download the CSV file
+    # run command on environment terminal
     os.system(f"wget {url} -O {csv_name}")
 
 
