@@ -27,6 +27,27 @@
   - [Setting up a development environment in a Google Cloud VM](#setting-up-a-development-environment-in-a-google-cloud-vm)
   - [Port mapping and networks in Docker](#port-mapping-and-networks-in-docker)
 
+# Environment Configuration
+
+VS Code can be used as an IDE, but you also need to choose your development environment.
+
+Three main options for this course:
+1. Local environment
+1. Github Codespaces VM
+1. GCP VM
+
+It is recommended not to use a local environment; to start via github codespaces initially, and migrate into gcp vm at some point.
+
+> Note that the terminal on vscode will be connected to the developmetn environment, and you can program in bash if the environmnent is linux-based, as if it were CMD on your local windows environment.
+
+> This also means we should install the linux version of all software (e.g. terravision, docker, gcp) on the linux VM we choose.
+
+> Note that each of these environments, although much preferable to a local environment setup where you have to install all software locally and navigate the complexity of windows, have a free tier beyond which payment is required.
+
+_Example: Dashboard for Github Codespaces Free Tier_
+
+![Alt text](.\images\1_github-codespaces.png)
+
 # Introduction to Data Engineering
 ***Data Engineering*** is the design and development of systems for collecting, storing and analyzing data at scale.
 
@@ -47,7 +68,6 @@ During the course we will replicate the following architecture:
 A **data pipeline** is a service that receives data as input and outputs more data. For example, reading a CSV file, transforming the data somehow and storing it as a table in a PostgreSQL database.
 
 ![data pipeline](../Reference_Material/images/01_01.png)
-
 
 _[Back to the top](#table-of-contents)_
 
@@ -823,82 +843,106 @@ _[Back to the top](#table-of-contents)_
 
 # Terraform and Google Cloud Platform
 
-## Terraform Introduction
-[Terraform](https://www.terraform.io/) is an [infrastructure as code](https://www.wikiwand.com/en/Infrastructure_as_code) tool.
-
-It  allows us to provision infrastructure resources through code, thus making it possible to handle infrastructure as an additional software component and take advantage of tradtional software tools and utilities, such as version control.
-
-## Terraform Providers
-A provider in Terraform is a plugin that enables interaction with an API. This includes Cloud providers and Software-as-a-service providers. Most cloud providers (AWS, Azure, GCP) have Terraform providers, as seen on the list of providers on Terraform website.
-
-This means that, using Terraform, a company can easily manage its cloud infrastructure in a multi-cloud environment, in a single seamless experience.
-
-It also allows us to bypass the cloud vendor GUIs!
-
-> Terraform is cloud-agnostic and supports multiple cloud providers, and not just GCP. This means engineers can use the same Terraform code and workflows to manage infrastructure across different cloud platforms or even in hybrid cloud environments. This is not to mention the reproducibility it enables. Oh.. and it is easier for version control too. Lotta benefits.
-
-![Alt text](.\images\02_terraform.png)
-
-## Key Terraform Commands
-
-`init` - once providers are defined, init will bring the provider-related code to your machine
-`plan` - the infrastructure & resources which are planned to be created
-`apply` - run all infrastrcture defined in the `tf` (`terraform`) files
-`destory` - remove all infrastructure defined in the `tf` files
-
-> Note that it is helpful to install the `Hashicorp Terraform` extension on VSCode
+[Video Source](https://www.youtube.com/watch?v=Hajwnmj0xfQ&t=1046s)
 
 ## GCP
 During this course we will use [Google Cloud Platform](https://cloud.google.com/) (GCP) as our cloud services provider.
 
-## GCP initial setup
+### GCP Installation
 
-GCP is organized around *projects*. You may create a project and access all available GCP resources and services from the project dashboard.
+Download the [GCP SDK](https://cloud.google.com/sdk/docs/quickstart) for local setup. Follow the instructions to install and connect to your account and project.
 
-We will now create a *project* and a *service account*, and we will download the authentication keys to our computer. A _service account_ is like a user account but for apps and workloads; you may authorize or limit what resources are available to your apps with service accounts. Usually, no users will log into a service account.
+> A software development kit (SDK) is a set of platform-specific building tools like debuggers, compilers, and libraries. SDKs bring third-party tools and resources to your environment. In contrast, an application programming interface (API) is a mechanism that enables two software components to communicate with each other using predetermined protocols. You can use APIs to communicate with existing software components and integrate predeveloped functionality in your code. SDKs may include APIs among several other resources for the platform they support. Similarly, you can use SDKs to create new APIs that you can share with others. Both SDKs and APIs make the software development process more efficient and collaborative.
+    
+To check whether the Google Cloud SDK has been installed successfully on your machine, in the Windows Terminal, type `gcloud -v`. 
+    
+(![Alt text](.\images\1_gcloud-version.png)
 
->You can jump to the [next section](1_intro.md#gcp-setup-for-access) if you already know how to do this.
+Note that so far, we have not connected to our google cloud account.
+
+> It is helpful to also download and install the extension `Google Cloud Code`
+    
+
+### GCP initial setup
+
+GCP is organized around **projects**. You may create a project and access all available GCP resources and services from the project dashboard.
+
+We will now create a **project** and a **service account**, and we will download the authentication keys to our computer.
+
+> A **service account** is like a user account but for apps and workloads; you may authorize or limit what resources are available to your apps with service accounts. Usually, no users will log into a service account.
 
 Please follow these steps:
 
-1. Create an account on GCP. You should receive $300 in credit when signing up on GCP for the first time with an account.
-1. Setup a new project and write down the Project ID.
+1. **Create an account on GCP.**
+    > You should receive $300 in credit when signing up on GCP for the first time with an account.
+1. **Setup a new project and write down the Project ID.**
     1. From the GCP Dashboard, click on the drop down menu next to the _Google Cloud Platform_ title to show the project list and click on _New project_.
-    1. Give the project a name. We will use `dtc-de` in this example. You can use the autogenerated Project ID (this ID must be unique to all of GCP, not just your account). Leave the organization as _No organization_. Click on _Create_.
-    1. Back on the dashboard, make sure that your project is selected. Click on the previous drop down menu to select it otherwise.
-1. Setup a service account for this project and download the JSON authentication key files.
+    1. Give the project a name. We will use `dtc-de` in this example.
+    1. Every project must have a unique **Project ID** (`projectname-number`)
+        >You can use the autogenerated Project ID (this ID must be unique to all of GCP, not just your account).
+    1. Leave the organization as _No organization_.
+    1. Click on _Create_.
+    1. Back on the dashboard, make sure that your project is selected.
+        >Click on the previous drop down menu to select it otherwise.
+1. **Setup a service account for this project and download the JSON authentication key files.**
     1. _IAM & Admin_ > _Service accounts_ > _Create service account_
+    ![Alt text](.\images\1_IAM.png)
     1. Provide a service account name. We will use `dtc-de-user`. Leave all other fields with the default values. Click on _Create and continue_.
+        > Note that a unique service accout id is created in the format `service-accout-name@projectID...serviceaccout...`
     1. Grant the Viewer role (_Basic_ > _Viewer_) to the service account and click on _Continue_
     1. There is no need to grant users access to this service account at the moment. Click on _Done_.
     1. With the service account created, click on the 3 dots below _Actions_ and select _Manage keys_.
     1. _Add key_ > _Create new key_. Select _JSON_ and click _Create_. The files will be downloaded to your computer. Save them to a folder and write down the path.
-1. Download the [GCP SDK](https://cloud.google.com/sdk/docs/quickstart) for local setup. Follow the instructions to install and connect to your account and project.
-1. Set the environment variable to point to the auth keys.
-    1. The environment variable name is `GOOGLE_APPLICATION_CREDENTIALS`
-    1. The value for the variable is the path to the json authentication file you downloaded previously.
-    1. Check how to assign environment variables in your system and shell. In bash, the command should be:
-        ```bash
-        export GOOGLE_APPLICATION_CREDENTIALS="<path/to/authkeys>.json"
-        ```
+        > The key is typically named: `ProjectID-keyID.json`
+    1. It is cructial that you do not push to Git / backup on cloud/ etc. unless you can be sure the keys are safe and private. To address this concern in your git environment, find the file `..gitignore`. This contains a list of files and files types that `git` will ignore when pushing changes. Make sure `*.json` is added to this file, so that any .json files will not be pushed to the cloud.
+        > If someone gets the key, they can access the cloud environment and consume resources (incurrring EU)
+
+1. **Authenticate Google Cloud SDK to Google Cloud Account, using an environment variable that is set to point to the auth keys.**
+    1. The environment variable name that will be checked for credentials by the Google Cloud SDK by default is `GOOGLE_APPLICATION_CREDENTIALS`
+    1. The value for the variable should be set to the path containing the json authentication file you downloaded previously.
+    1. _**Check how to assign environment variables in your system and shell!**_
+        > We are working in bash on terminal connected to GitHub Codespaces at the time of writing.
+    
+        - In bash, the command should be:
+            ```bash
+            export GOOGLE_APPLICATION_CREDENTIALS="<path/to/authkeys>.json"
+            ```
+        - In windows terminal ([source](https://www3.ntu.edu.sg/home/ehchua/programming/howto/Environment_Variables.html)), the command should be:
+            ```bash
+            set GOOGLE_APPLICATION_CREDENTIALS = <path/to/authkeys>.json
+            ```
     1. Refresh the token and verify the authentication with the GCP SDK:
         ```bash
         gcloud auth application-default login
         ```
+        - You will get a message asking you to confirm that you want to use the custom environment variable's keys, as opposed to the default keys linked to the owner.
+        ![Alt text](.\images\1_gcloud-default.png)
+        - We do, of course, because we want to use the key associated with the service account, so confirm _Yes_.
+        - You will be prompted to log into your account via browser and to give access to the `GoogleAuthLibrary`.
+        - If successful, you should get:
+        ![Alt text](.\images\1_gcloud-success.png)
+        ![Alt text](.\images\1_gcloud_success2.png)
+        > Note this is necessary each time your session expires
 
-You should now be ready to work with GCP.
+Your local environment should now be ready to work with the GCP environment.
 
-## GCP setup for access
+> Note: The method followed in these notes is known as `OAuth`
 
-_([Video source](https://www.youtube.com/watch?v=Hajwnmj0xfQ&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))_
+### GCP setup for access
 
-In the following chapters we will setup a _Data Lake_ on Google Cloud Storage and a _Data Warehouse_ in BigQuery. We will explore these concepts in future lessons but a Data Lake is where we would usually store data and a Data Warehouse provides a more structured way to access this data.
+_([Video source](https://youtu.be/Hajwnmj0xfQ?t=1046&si=Vkg8kh9aLVv2vFCW))_
+
+In the following chapters we will setup a _Data Lake_ on Google Cloud Storage (storing data in `buckets` as `flat files`, in an organised and compressed format) and a _Data Warehouse_ in BigQuery. We will explore these concepts in future lessons but a Data Lake is where we would usually store data and a Data Warehouse provides a more structured way to access this data.
 
 We need to setup access first by assigning the Storage Admin, Storage Object Admin, BigQuery Admin and Viewer IAM roles to the Service Account, and then enable the `iam` and `iamcredentials` APIs for our project.
 
+> We are assigning very powerful roles for the purpose of the tutorial; not advisble in reality, where you would generally not use the pre-defined GCP roles, but instead create custom roles where specific permissions are assigned over specific resources.
+
+> It is also common practice to create different service accounts for each service (e.g. Terraform, vs. Datapipelines, etc.) with the right level of permissions for each.
+
 Please follow these steps:
 
-1. Assign the following IAM Roles to the Service Account: Storage Admin, Storage Object Admin, BigQuery Admin and Viewer.
+1. Assign the following IAM Roles to the Service Account: `Storage Admin`, `Storage Object Admin`, `BigQuery Admin` and `Viewer`.
     1. On the GCP Project dashboard, go to _IAM & Admin_ > _IAM_
     1. Select the previously created Service Account and edit the permissions by clicking on the pencil shaped icon on the left.
     1. Add the following roles and click on _Save_ afterwards:
@@ -909,16 +953,65 @@ Please follow these steps:
 1. Enable APIs for the project (these are needed so that Terraform can interact with GCP):
    * https://console.cloud.google.com/apis/library/iam.googleapis.com
    * https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com
+
+   ![Alt text](.\images\1_API.png)
+    > Note that whenever local account interacts with cloud resources, it does not interact with the cloud resource directly, it interacts through APIs, so APIs enable the communication between local and cloud resources
 1. Make sure that the `GOOGLE_APPLICATION_CREDENTIALS` environment variable is set.
 
 
-## Terraform basics
+## Terraform
+### Terraform Introduction
+[Terraform](https://www.terraform.io/) is an [infrastructure as code](https://www.wikiwand.com/en/Infrastructure_as_code) tool.
+
+It  allows us to provision infrastructure resources through code, thus making it possible to handle infrastructure as an additional software component and take advantage of tradtional software tools and utilities, such as version control.
+
+A great benefit is: declarative programming langauge, as opposed to imperative. Consequently, current config file always contains an up-to-date description of the current infrastrcture set-up.
+
+### Terraform Providers
+A provider in Terraform is a plugin that enables interaction with an API. This includes Cloud providers and Software-as-a-service providers. Most cloud providers (AWS, Azure, GCP) have Terraform providers, as seen on the list of providers on Terraform website.
+
+This means that, using Terraform, a company can easily manage its cloud infrastructure in a multi-cloud environment, in a single seamless experience.
+
+It also allows us to bypass the cloud vendor GUIs!
+
+> Terraform is cloud-agnostic and supports multiple cloud providers, and not just GCP. This means engineers can use the same Terraform code and workflows to manage infrastructure across different cloud platforms or even in hybrid cloud environments. This is not to mention the reproducibility it enables. Oh.. and it is easier for version control too. Lotta benefits.
+
+![Alt text](.\images\1_terraform.png)
+
+### Key Terraform Commands
+
+- `init` - once providers are defined, init will bring the provider-related code to your machine
+- `refresh` - will update the state file to the current actual configuration
+- `plan` - the infrastructure & resources which are planned to be created
+- `apply` - run all infrastrcture defined in the `tf` (`terraform`) files
+- `destory` - remove all infrastructure defined in the `tf` files
+
+
+### Terraform Installation
+
+- For installation on both windows and Linux (GitHub CodeSpaces), follow instructions [here](https://cloud.google.com/sdk/docs/downloads-interactive#linux-mac)
+
+>Check with `terraform --version` to make sure the latest version of terraform is installed (this required quite some config to set up)
+
+> Note that it is helpful to install the `Hashicorp Terraform` extension on VSCode
+
+> Note that Terraform installation on Windows may require modification of `PATH` `environment variable` on windows; The PATH is an important concept when working on the command line. It's a list of directories that tell your operating system where to look for programs, so that you can just write script instead of /home/me/bin/script or C:\Users\Me\bin\script. But different operating systems have different ways to add a new directory to it.
+
+
+
+### Terraform basics
 
 _([Video source](https://www.youtube.com/watch?v=dNkEgO-CExg&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=10))_
 
-There are 2 important components to Terraform: the code files and Terraform commands.
+There are 2 important components to Terraform:
+1. Terraform code files, and
+1. Terraform commands.
 
-The set of files used to describe infrastructure in Terraform is known as a Terraform ***configuration***. Terraform configuration files end up in `.tf` for files wtritten in Terraform language or `tf.json` for JSON files. A Terraform configuration must be in its own working directory; you cannot have 2 or more separate configurations in the same folder.
+The set of files used to describe infrastructure in Terraform is known as a Terraform ***configuration***.
+
+Terraform configuration files end up in `.tf` for files written in Terraform language, or `tf.json` for JSON files. 
+
+A Terraform configuration must be in its own working directory; you cannot have 2+ separate configurations in the same folder.
 
 Here's a basic `main.tf` file written in Terraform language with all of the necesary info to describe basic infrastructure:
 
@@ -933,7 +1026,7 @@ terraform {
 }
 
 provider "google" {
-  credentials = file("<NAME>.json")
+  credentials = file("<NAME>.json") // Use the credentials parameter if you do not want to set env-var GOOGLE_APPLICATION_CREDENTIALS
 
   project = "<PROJECT_ID>"
   region  = "us-central1"
@@ -946,29 +1039,35 @@ resource "google_compute_network" "vpc_network" {
 ```
 * Terraform divides information into ***blocks***, which are defined within braces (`{}`), similar to Java or C++. However, unlike these languages, statements are not required to end with a semicolon `;` but use linebreaks instead.
 * By convention, arguments with single-line values in the same nesting level have their equal signs (`=`) aligned for easier reading.
-* There are 3 main blocks: `terraform`, `provider` and `resource`. There must only be a single `terraform` block but there may be multiple `provider` and `resource` blocks.
-* The `terraform` block contains settings:
-    * The `required_providers` sub-block specifies the providers required by the configuration. In this example there's only a single provider which we've called `google`.
+* There are 3 main blocks:
+    1. `terraform`,
+    1. `provider`, and
+    1. `resource`.
+* There must only be a single `terraform` block but there may be multiple `provider` and `resource` blocks.
+1. The `terraform` block contains settings:
+    * The `required_providers` sub-block specifies the providers required by the configuration. In this example there's only a single provider which we've called `google`. In a multi-cloud environment, there will be 2+ providers.
         * A _provider_ is a plugin that Terraform uses to create and manage resources.
         * Each provider needs a `source` in order to install the right plugin. By default the Hashicorp repository is used, in a similar way to Docker images.
-            * `hashicorp/google` is short for `registry.terraform.io/hashicorp/google` .
-        * Optionally, a provider can have an enforced `version`. If this is not specified the latest version will be used by default, which could introduce breaking changes in some rare cases.
-    * We'll see other settings to use in this block later.
-* The `provider` block configures a specific provider. Since we only have a single provider, there's only a single `provider` block for the `google` provider.
-    * The contents of a provider block are provider-specific. The contents in this example are meant for GCP but may be different for AWS or Azure.
-    * Some of the variables seen in this example, such as `credentials` or `zone`, can be provided by other means which we'll cover later.
-* The `resource` blocks define the actual components of our infrastructure. In this example we have a single resource.
-    * `resource` blocks have 2 strings before the block: the resource ***type*** and the resource ***name***. Together the create the _resource ID_ in the shape of `type.name`.
+            * `hashicorp/google` is short-hand for `registry.terraform.io/hashicorp/google` .
+        * Optionally, a provider can have an enforced `version`. If this is not specified, the latest version will be used by default, which could introduce breaking changes in some rare cases.
+2. The `provider` block configures a specific provider. Since we only have a single provider, there's only a single `provider` block for the `google` provider.
+    * The contents of a provider block are provider-specific. The contents in this example are meant for GCP, but may be different for AWS or Azure.
+    * Some of the variables seen in this example, such as `credentials` or `zone`, can be provided by other means which we discuss later.
+3. The `resource` blocks define the actual components of our infrastructure. In this example we have a single resource.
+    * `resource` blocks have 2 strings before the block: the resource ***type*** and the resource ***name***. Together the create the _resource ID_ in the format `type.name`.
     * About resource types:
         * The first prefix of the resource type maps to the name of the provider. For example, the resource type `google_compute_network` has the prefix `google` and thus maps to the provider `google`.
-        * The resource types are defined in the Terraform documentation and refer to resources that cloud providers offer. In our example [`google_compute_network` (Terraform documentation link)](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) refers to GCP's [Virtual Private Cloud service](https://cloud.google.com/vpc).
-    * Resource names are the internal names that we use in **our Terraform configurations** to refer to each resource (and therefore these names have no impact on the actual infrastructure.)
+        * The resource types are defined in the Terraform documentation and refer to resources that cloud providers offer.
+            > In our example [`google_compute_network`](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) refers to GCP's [Virtual Private Cloud service](https://cloud.google.com/vpc).
+    * Resource names are the **internal names** that we use in **our Terraform configurations** to refer to each resource (and therefore these names have no impact on the actual infrastructure.)
         * The contents of a resource block are specific to the resource type. [Check the Terraform docs](https://registry.terraform.io/browse/providers) to see a list of resource types by provider.
-        * In this example, the `google_compute_network` resource type has a single mandatory argument called `name`, which is the name that the resource will have within GCP's infrastructure.
+        * In this example, the `google_compute_network` resource type has a single mandatory argument called `name`, which is the name that the resource will have within GCP's infrastructure, and which must be unique.
             * Do not confuse the _resource name_ with the _`name`_ argument!!!
-> *Top tip*: assign a global unique name to the `name` argument using `project_name.resource_name`!
+                > Assign a global unique name to the `name` argument using `project_name.resource_name`!
 
-Besides these 3 blocks, there are additional available blocks:
+In addition to the three `blocks` discussed previously (`terraform`, `provider`, `resource`), we can also define blocks for `variables` (both `global variables` and `local variables`).
+
+> Variables are used to make your code modular and dynamic.
 
 * ***Input variables*** block types are useful for customizing aspects of other blocks without altering the other blocks' source code. They are often referred to as simply _variables_. They are passed at runtime.
     ```java
@@ -981,12 +1080,12 @@ Besides these 3 blocks, there are additional available blocks:
     * Description:
         * An input variable block starts with the type `variable` followed by a name of our choosing.
         * The block may contain a number of fields. In this example we use the fields `description`, `type` and `default`.
-        * `description` contains a simple description for documentation purposes.
-        * `type` specifies the accepted value types for the variable
-        * If the `default` field is defined, the variable becomes optional because a default value is already provided by this field. Otherwise, a value must be provided when running the Terraform configuration.
-        * For additional fields, check the [Terraform docs](https://www.terraform.io/language/values/variables).
-    * Variables must be accessed with the keyword `var.` and then the name of the variable.
-    * In our `main.tf` file above, we could access this variable inside the `google` provider block with this line:
+            * `description` contains a simple description for documentation purposes.
+            * `type` specifies the accepted value types for the variable
+            * If the `default` field is defined, the variable becomes optional because a default value is already provided by this field. Otherwise, a value must be provided when running the Terraform configuration.
+            * For additional fields, check the [Terraform docs](https://www.terraform.io/language/values/variables).
+    * Once they have been created, variables must be accessed with the word `var` in the format: `var.variable_name`
+    * In our `main.tf` file above, rather than defining the region each time for each resource we create, we could access this variable inside the `google` provider block with this line:
         ```java
         region = var.region
         ```
@@ -998,62 +1097,66 @@ Besides these 3 blocks, there are additional available blocks:
     }
     ```
     * Description:
-        * Local values may be grouped in one or more blocks of type `locals`. Local values are often grouped according to usage.
+        * Local values may be grouped in one or more blocks of type `locals`; they are often often grouped according to usage.
         * Local values are simpler to declare than input variables because they are only a key-value pair.
-    * Local values must be accessed with the word `local` (_mind the lack of `s` at the end!_).
-        ```java
-        region = local.region
-        zone = local.zone
-        ```
+        * Local values must be accessed with the word `local` in the format `local.variable_name`
+            ```java
+            region = local.region
+            zone = local.zone
+            ```
+            > Mind the lack of `s` at the end!
 
 With a configuration ready, you are now ready to create your infrastructure. There are a number of commands that must be followed:
+
 * `terraform init` : initialize your work directory by downloading the necessary providers/plugins.
 * `terraform fmt` (optional): formats your configuration files so that the format is consistent.
 * `terraform validate` (optional): returns a success message if the configuration is valid and no errors are apparent.
 * `terraform plan` :  creates a preview of the changes to be applied against a remote state, allowing you to review the changes before applying them. 
-> `terraform plan` is especially useful to preview the default values for the parameters that have not been manually configured.
+    
+    > `terraform plan` is especially useful to preview the default values for the parameters that have not been manually configured.
+
 * `terraform apply` : applies the changes to the infrastructure.
-> note that after running `terraform apply`, a `state` file (`.tfstate`) is created in the directory, which contains the `.tf` script plus additional back-ends details.
+    
+    > note that after running `terraform apply`, a `state` file (`.tfstate`) is created in the directory, which contains the `.tf` script plus additional back-end details.
+    
 * `terraform destroy` : removes your stack from the infrastructure.
-> note that after destroying, a `.tfstate.backup` file is created with a version history of the destroyed resources
+        
+    > note that after destroying, a `.tfstate.backup` file is created with a version history of the destroyed resources
 
 ## Creating GCP infrastructure with Terraform
 
 _([Video source](https://www.youtube.com/watch?v=dNkEgO-CExg&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=10))_
 
-We will now create a new `main.tf` file as well as an auxiliary `variables.tf` file with all the blocks we will need for our project.
 
-The infrastructure we will need consists of a Cloud Storage Bucket (`google_storage-bucket`) for our _Data Lake_ and a BigQuery Dataset (`google_bigquery_dataset`).
+We will now use Terraform to create infrastructure as code on GCP
 
-In `main.tf` we will configure the `terraform` block as follows:
-```java
-terraform {
-  required_version = ">= 1.0"
-  backend "local" {}
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-    }
-  }
-}
-```
-* The `required_version` field states the minimum Terraform version to be used.
-* The `backend` field states where we'd like to store the _state_ of the infrastructure. `local` means that we'll store it locally in our computers. Alternatively, you could store the state online.
+Start by creating a new directory, called `terraform`, in which we will create the following four files:
+    1. `.terraform-version`
+    1. `main.tf`
+    1. `README.md`
+    1. `variables.tf`
 
-The provider will not make use of the `credentials` field because when we set up GCP access we already created a `GOOGLE_APPLICATION_CREDENTIALS` env-var which Terraform can read in order to get our authentication keys.
+1. Start by creating `.terraform-version`, a file containing the single string `x.x.x` denoting the version number as per running `terraform -v` in your terminal (`1.7.1` at time of writing)
 
-In the `variables.tf` we will store variables that may change depending on your needs and location. The ones to note are:
-* `region` may vary depending on your geographical location; change it according to your needs.
-* `BQ_DATASET` has the name of the table for BigQuery. You may leave it as it is or change it t fit your needs.
-* `project` is the Project ID of your project in GCP. SInce the ID is unique, it is good practice to have Terraform as for it every time in case the same code is applied on different projects.
+    > Note that there alternatives to this option
 
-You may access [`main.tf` from this link](../1_intro/terraform/main.tf) and [`variables.tf` from this link](../1_intro/terraform/variables.tf). Take a look at them to understand the details of the implementation. Copy them to a new folder within your work directory so that the subfolder only contains the Terraform configuration files. Now run the following commands:
+2. We will now create a new `main.tf` file as well as an auxiliary `variables.tf` file with all the blocks we will need for our project. The infrastructure we will need consists of a Cloud Storage Bucket (`google_storage-bucket`) for our _Data Lake_ and a BigQuery Dataset (`google_bigquery_dataset`).
+
+3. In the `variables.tf` we will store variables that may change depending on your needs and location.
+
+Refer to the files in [`main.tf`](../1_intro/terraform/main.tf) and [`variables.tf`](../1_intro/terraform/variables.tf).
+
+The terraform configuration should be located in a self-contained subdirectory which only contains them. Now run the following commands (from the directory containing Terraform configurtion files):
 
 ```bash
 terraform init
 ```
 
-This will download the necessary plugins to connect to GCP and download them to `./.terraform`. Now let's plan the infrastructure:
+This will download the necessary plugins to connect to GCP and download them to `./.terraform`.
+
+![Alt text](.\images\1_terraform-init.png)
+
+Now let's plan the infrastructure:
 
 ```bash
 terraform plan
@@ -1068,6 +1171,10 @@ terraform apply
 ```
 
 You will need to confirm this step by typing `yes` when prompted. This will create all the necessary components in the infrastructure an return a `terraform.tfstate` with the current state of the infrastructure.
+
+![Alt text](.\images\1_terraform-apply.png)
+![Alt text](.\images\1_terraform-apply-gcp.png)
+
 
 After you've successfully created the infrastructure, you may destroy it so that it doesn't consume credit unnecessarily:
 
