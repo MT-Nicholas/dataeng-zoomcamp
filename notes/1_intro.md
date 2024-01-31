@@ -162,8 +162,13 @@ COPY pipeline.py pipeline.py
 # define what to do first when the container runs
 # in this example, we will just run the script
 # i.e. we are 'automating' the terminal input of "python", "pipeline.py"
-ENTRYPOINT ["python pipeline.py"]
+ENTRYPOINT ["python, pipeline.py"]
 ```
+
+> `FROM`: You cannot directly use multiple FROM instructions in a single Dockerfile. The FROM instruction is used to set the base image for your Docker image, and a Docker image can have only one base image. The base image defines the environment and tools available within the image. However, you can use multiple stages in a Dockerfile, each with its own FROM instruction. This is known as a multi-stage build. In a multi-stage build, you can use different base images in each stage and copy artifacts from one stage to another. This helps to keep the final image smaller and more focused.
+
+> `RUN`: Since our base image is python, and this comes with pip pre-installed, we can run a pip command on our base image, which is specified in `FROM`
+
 #### Build Image
 Let's build the image:
 
@@ -493,11 +498,13 @@ docker run -it \
         --table_name=yellow_taxi_trips \
         --url="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 ```
-* We need to provide the `network` for Docker to find the Postgres container. It goes before the name of the image. `network` is a parameter for Docker whilst the other parameters are for our Python script. We can specify this using indenentation
-* Our Python script does not connect to the PGAdmin Container, but needs to connect to the PostgresDB container. Since Postgres is running on a separate container from the Python script, for which we are building a seperate container, the `host` argument should be changed to point to the container name of PostgresDB (rather than: `localhost`, as we saw previously -- because **when you use `localhost` in a container, this refers to the container itself!**).
+* `Docker network`: We need to provide the `network` for Docker to find the Postgres container. It goes before the name of the image. `network` is a parameter for Docker whilst the other parameters are for our Python script. We can specify this using indenentation
+* `Host name`: Our Python script does not connect to the PGAdmin Container, but needs to connect to the PostgresDB container. Since Postgres is running on a separate container from the Python script, for which we are building a seperate container, the `host` argument should be changed to point to the container name of PostgresDB (rather than: `localhost`, as we saw previously -- because **when you use `localhost` in a container, this refers to the container itself!**).
 * You could have dropped any existing table of data in the PostgresDB via pgAdmin beforehand if you wanted, but the script will automatically replace the pre-existing table.
 * Note that in reality, rather than creating a `docker network` and accesssing a local database on our local network through `host`, we would have a database that runs on the cloud, and use the url of this database for the `host` parameter.
 * Moreover, note that rather than passing arugments through Docker, we could have e.g. Kubernetes job, Airflow, etc.
+
+![Alt text](.\images\1_architecture.png)
 
 ## Running Postgres and pgAdmin with Docker-compose
 
@@ -589,7 +596,7 @@ docker-compose up -d
 
 ## Including .py data ingestion script in docker-compose
 
-**For some reason, this is not covered in detail ...**
+**FIGURE THIS OUT: For some reason, this is not covered in detail ...**
 
 If you want to re-run the dockerized ingest script when you run Postgres and pgAdmin with `docker-compose`, you will have to find the name of the virtual network that Docker compose created for the containers. You can use the command `docker network ls` to find it and then change the `docker run` command for the dockerized script to include the network name.
 
@@ -1186,13 +1193,72 @@ Once again, you will have to confirm this step by typing `yes` when prompted. Th
 
 _[Back to the top](#table-of-contents)_
 
-# Extra content
+# Setting up a development environment in a Google Cloud VM
 
-## Setting up a development environment in a Google Cloud VM
+We will now switch our development environment from `Github Codespaces` to a `Google Cloud VM`
 
-If you cannot set up a local development environment, you may use part of the $300 credits of GCP in creating a Cloud VM and access to it via SSH to set up the environment there.
+[Follow the instructions in this video](https://youtu.be/ae-CV2KfoN0?si=t1OMcGisRGdh2IOc).
 
-[Follow the instructions in this video](https://www.youtube.com/watch?v=ae-CV2KfoN0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=11).
+## Steps
+
+1. Generate [SSH key](https://www.techtarget.com/searchsecurity/definition/Secure-Shell)
+    - SSH is a network protocol for authentication.
+    - We will create a SSH key on our local environment following [this documentation](https://cloud.google.com/compute/docs/connect/create-ssh-keys#windows-10-or-later).
+    - The key consists of two parts: public key, private key
+    - Take note of the last part of the public key, in the format `user@local_host`
+        
+        > e.g. `ssh-keygen` > `.ssh\GCP\GCP`
+
+        > The key can be created on any environment available to you, and the generated keys, once generated, can be used across from any platforms/environment. We will generate the keys on our local windows environment, since this is what is available for us (using Windows CMD). Instructions include additional parameters, but it works to simply run `ssh-keygen` and `Enter` for any prompts to leave blank.
+        
+        ![Alt text](.\images\1_SSH-generate.png)
+        
+    
+2. Add SSH Key to GCP's `Compute Engine API` for Authentication
+    - Note that `Compute Engine` is the VM we will be using for our environment, and like all other APIs, they must be enabled the first time.
+    - On GCP, navigate to: _Compute Engine > Metadata > SSH Keys_, and paste the public key here.
+        > As explained on this page: SSH keys can be used to connect to the VM instances of a project. Project-level keys are propagated to all VM instances that DO not have their own SSH keys. i.e. All instances in a project inherit the provided SSH keys.
+        ![Alt text](.\images\1_SSH-GCP.png) 
+3. Create VM on GCP
+    - Navigate to: _Compute Engine > VM instances > Create Instance_
+    - Recommend specs: name = de-zoomcamp; region = europe-west1(Belgium); machine type: e2-standard-2;
+    - (optional) Debian OS is fine, but we can change Boot Disk to another OS, e.g. Ubuntu. And we can assign 30GB to be on the safe side.
+4. Take note of External IP
+    - We need to copy the External IP which will be used to connect
+    ![Alt text](.\images\1_external-IP.png)
+5. Connect to VM
+    - Connect to VM by running:
+        
+        `ssh -i <private_key_path> <user>@<external_ip>`
+        
+        > e.g. `ssh -i ~/.ssh/gcp/gcp nikku@35.187.78.30`
+        
+        > If prompted to continue connecting, say `yes`
+        
+        ![Alt text](.\images\1_connect-VM.png)
+6. Test connection
+    To test connection, run `htop`
+
+## Logging in and out
+
+We can log in and out of the environment using `logout` to log out and the original `ssh -i <private_key_path> <user>@<external_ip>` to log in again.
+
+## Installing software
+
+### GCP SDK
+- This is not necessary!
+- (Naturally...) GCP VM comes pre-installed with GCP SDK, which you can confirm with `gcloud --version`
+
+### Anaconda
+- Browse to Anaconda website and download linux version; copy url, go to terminal and run `wget <url>` to download the installation file, followed by `bash Anaconda3-2023.09-0-Linux-x86_64.sh` to run the installation, read the terms, accept, keep the default install directory, and say yes to initialize with anaconda.
+![Alt text](.\images\1_anaconda_download.png)
+
+Continue @9:35 https://www.youtube.com/watch?v=ae-CV2KfoN0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=14
+
+
+
+
+
 
 ## Port mapping and networks in Docker
 
