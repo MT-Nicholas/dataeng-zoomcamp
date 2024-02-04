@@ -1197,6 +1197,10 @@ _[Back to the top](#table-of-contents)_
 
 We will now switch our development environment from `Github Codespaces` to a `Google Cloud VM`
 
+Open a new VS code instance, and open up the terminal, using bash:
+
+![Alt text](.\images\1_local_bash.png)
+
 [Follow the instructions in this video](https://youtu.be/ae-CV2KfoN0?si=t1OMcGisRGdh2IOc).
 
 ## Steps
@@ -1207,8 +1211,6 @@ We will now switch our development environment from `Github Codespaces` to a `Go
     - The key consists of two parts: public key, private key
     - Take note of the last part of the public key, in the format `user@local_host`
         
-        > e.g. `ssh-keygen` > `.ssh\GCP\GCP`
-
         > The key can be created on any environment available to you, and the generated keys, once generated, can be used across from any platforms/environment. We will generate the keys on our local windows environment, since this is what is available for us (using Windows CMD). Instructions include additional parameters, but it works to simply run `ssh-keygen` and `Enter` for any prompts to leave blank.
         
         ![Alt text](.\images\1_SSH-generate.png)
@@ -1231,7 +1233,7 @@ We will now switch our development environment from `Github Codespaces` to a `Go
         
         `ssh -i <private_key_path> <user>@<external_ip>`
         
-        > e.g. `ssh -i ~/.ssh/gcp/gcp nikku@35.187.78.30`
+        > e.g. `ssh -i ~/.ssh/GCP NIKKU@35.187.78.30`
         
         > If prompted to continue connecting, say `yes`
         
@@ -1243,21 +1245,86 @@ We will now switch our development environment from `Github Codespaces` to a `Go
 
 We can log in and out of the environment using `logout` to log out and the original `ssh -i <private_key_path> <user>@<external_ip>` to log in again.
 
-## Installing software
+## Create config file for SSH to faciliate connection
+- In the same folder as your ssh key, create a new file `config` by running `touch config` from the directory to create the text file, and `code config` to open for editing.
+- This will be an `SSH configuration file`; rather than running the `ssh -i <private_key_path> <user>@<external_ip>` command discussed previously, we will create this configuration file, call it a name (i.e. the Alias), and all we have to run is `ssh <ALIAS>` to connect to the VM, which makes connecting much simpler.
+- e.g. with the alias `de-zoomcamp` , we can run `ssh de-zoomcamp` to connect
+
+    ```bash
+    # just an alias
+    Host de-zoomcamp
+        
+        # external ip of our VM
+        Hostname 35.187.78.30
+
+        # USERNAME associated with private key
+        User NIKKU
+
+        # absolute path of private key
+        IdentityFile c:/Users/nikku/.ssh/GCP
+    ```
+
+
+- We can install the `Remote - SSH` and `Remote - SSH: Editing Configuration Files` extensions on VS Code to make it easier to connect from VS Code to the remote Google GCP VM;
+- Now, from VS code, you can `Open a Remote Window` (via bottom-left button) and then choose from a range of options under `Remote-SSH` (as shown below), click `Connect to Host` and, because we already created the SSH config file, we have the alias available already; click to connect.
+
+![Alt text](.\images\1_open-remote-window.png)
+
+## Configuring the VM
+
+Note that the `Github Codespaces` environment used prior was already pre-configured with some base software; here we need to configure everything from scratch on our `GCP VM`
 
 ### GCP SDK
 - This is not necessary!
 - (Naturally...) GCP VM comes pre-installed with GCP SDK, which you can confirm with `gcloud --version`
 
-### Anaconda
+### Anaconda (Python)
 - Browse to Anaconda website and download linux version; copy url, go to terminal and run `wget <url>` to download the installation file, followed by `bash Anaconda3-2023.09-0-Linux-x86_64.sh` to run the installation, read the terms, accept, keep the default install directory, and say yes to initialize with anaconda.
+
+> We can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -h` to see additional parameters; e.g. can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -b` to run in batch mode and auto-accept license agreements.
+
 ![Alt text](.\images\1_anaconda_download.png)
 
-Continue @9:35 https://www.youtube.com/watch?v=ae-CV2KfoN0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=14
+- When installation complete, make sure to **initialize** either by answering `yes` to the prompt; or else following the instructions [here]( https://docs.anaconda.com/free/anaconda/reference/faq/). Initialising will add a prompt to the start up script that loads anaconda whenever the VM is started; you can see the initialisation script that is executed every time the VM is turned on (including new piece for anaconda) using `load .bashrc`
 
+![Alt text](.\images\1_anaconda_init.png)
 
+- To view python version installed, just run `python`
 
+### Docker
 
+- To install docker, we can run `sudo apt-get update` followed by`sudo apt-get install docker.io` to make sure we download and install the altest version of `docker`.
+> Note that when using apt-get, we are installing the version that is maintained by the official ubuntu repo (similar to CRAN)
+
+#### apt-get vs. wget
+- `wget` is used for fetching files from the internet, while `sudo apt-get` is used for managing and installing packages from Ubuntu's repositories. The choice depends on where the software is hosted and how it's distributed.
+
+- `wget`:
+
+    - **Purpose**: wget is a command-line utility used for downloading files from the internet. When installing Anaconda using wget, you're essentially downloading the Anaconda installer script from the internet and then running it locally.
+    - **Usage**: For Anaconda, you might use a command like wget https://repo.anaconda.com/archive/Anaconda3-latest-Linux-x86_64.sh to download the installer script.
+
+- `sudo apt-get`:
+
+    - **Purpose**: sudo apt-get is a package management tool for Ubuntu that simplifies the process of installing, updating, and removing software packages.
+    - **Usage**: When installing Docker, you use sudo apt-get to fetch and install Docker from Ubuntu's official repositories. The apt-get system takes care of managing dependencies and ensuring a smooth installation.
+
+#### What is `sudo`?
+
+- `sudo` stands for "Superuser Do." sudo is used to execute commands with superuser privileges. When you prefix a command with sudo, it runs with elevated permissions, allowing you to perform actions that regular users typically can't.
+
+- You typically use `sudo` with `apt-get` to ensure successful installations, but you don't use `sudo` with `wget` directly. `sudo` is used to execute commands with elevated privileges, and `wget` is a tool for downloading files. However, you might use `sudo` when running commands related to files you've downloaded with wget.
+
+### Git
+
+- Git should already be installed on your VM
+
+### Cloning existing Repo
+
+- Locate your existing repo on Github; go to `Code` > `Clone`, and copy the `HTTPS url`
+- On your VM, run `git clone <url>`
+
+![Alt text](.\images\1_git-clone.png)
 
 
 ## Port mapping and networks in Docker
