@@ -272,7 +272,7 @@ docker pull dpage/pgadmin4:<tag name>   # default tag name is `latest` i.e. most
 
 ### Docker network
 However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
-![Alt text](image.png)
+![Alt text](.\images\1_error-network.png)
 
 Once again, quick google search for `docker network create` gives us the following [guidance](https://docs.docker.com/engine/reference/commandline/network_create/).
 
@@ -1268,7 +1268,7 @@ We can log in and out of the environment using `logout` to log out and the origi
 - We can install the `Remote - SSH` and `Remote - SSH: Editing Configuration Files` extensions on VS Code to make it easier to connect from VS Code to the remote Google GCP VM;
 - Now, from VS code, you can `Open a Remote Window` (via bottom-left button) and then choose from a range of options under `Remote-SSH` (as shown below), click `Connect to Host` and, because we already created the SSH config file, we have the alias available already; click to connect.
 
-![Alt text](.\images\1_open-remote-window.png)
+    ![Alt text](.\images\1_open-remote-window.png)
 
 ## Configuring the VM
 
@@ -1283,21 +1283,29 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 
 > We can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -h` to see additional parameters; e.g. can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -b` to run in batch mode and auto-accept license agreements.
 
-![Alt text](.\images\1_anaconda_download.png)
+    ![Alt text](.\images\1_anaconda_download.png)
 
 - When installation complete, make sure to **initialize** either by answering `yes` to the prompt; or else following the instructions [here]( https://docs.anaconda.com/free/anaconda/reference/faq/). Initialising will add a prompt to the start up script that loads anaconda whenever the VM is started; you can see the initialisation script that is executed every time the VM is turned on (including new piece for anaconda) using `load .bashrc`
 
-![Alt text](.\images\1_anaconda_init.png)
+    ![Alt text](.\images\1_anaconda_init.png)
 
 - To view python version installed, just run `python`
 
 ### Docker
 
 - To install docker, we can run `sudo apt-get update` followed by`sudo apt-get install docker.io` to make sure we download and install the altest version of `docker`.
-> Note that when using apt-get, we are installing the version that is maintained by the official ubuntu repo (similar to CRAN)
+
+- Docker installation can be confirmed by `docker --version`; however, if we run `docker run hello-world` *(a common test-case)* we will probably get errors because of not enough permissions, which we still need to configure... on the other hand `sudo docker run hello-world` works because we give super-user permissions... therefore we can follow the instructions [here](https://docs.docker.com/engine/install/linux-postinstall/) to configure permissions for docker.
+- On your VM, run `sudo groupadd docker`, `sudo usermod -aG docker $USER`, `newgrp docker`; finally test `docker run hello-world` again
+
+#### Further testing
+
+- Let's run latest docker container image of ubuntu bash using `docker run -it ubuntu bash` to furthe test; once successful, type `quit` to exit.
+
+    ![Alt text](.\images\1_ubuntu.png)
 
 #### apt-get vs. wget
-- `wget` is used for fetching files from the internet, while `sudo apt-get` is used for managing and installing packages from Ubuntu's repositories. The choice depends on where the software is hosted and how it's distributed.
+- `wget` is used for fetching files from the internet, while `sudo apt-get` is used for managing and installing packages from Ubuntu's repositories *(similar to CRAN)*. The choice depends on where the software is hosted and how it's distributed.
 
 - `wget`:
 
@@ -1315,6 +1323,28 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 
 - You typically use `sudo` with `apt-get` to ensure successful installations, but you don't use `sudo` with `wget` directly. `sudo` is used to execute commands with elevated privileges, and `wget` is a tool for downloading files. However, you might use `sudo` when running commands related to files you've downloaded with wget.
 
+### Docker Compose
+
+#### Installation
+- To install `docker compose`, easiest approach is to  find the installer online on the official docker git hub repo's `releases`, find the latest one, identify the right `asset` for linux *(linux x86 64)* available [here](https://github.com/docker/compose/releases/tag/v2.24.5)
+- Let's create a folder called `bin` using `mkdir bin`, and use `wget <url> -O docker_compose` to download the installer to the `bin` and give it a clear file name,
+- Once the executable file is downloaded, it will not be marked by the system as executable; use `ls` in directory check file name, and if it is not marked as a .`exe` *(typically, by green font)*, then use `chmod +x docker-compose` to mark it accordingly.
+
+    ![Alt text](.\images\1_docker-compose-exe.png)
+
+- Now if we run `./docker-compose --version` from the bin directory, we can see the version; but if we run `docker-compose --version` from another directory, we get nothing ....
+
+#### Modifying PATH to make global
+
+- We want to make `docker-compose` visibile from all other directories too, so we shall add it to the `PATH` variable, as follows: we use `nano .bashrc` to open the `bashrc` file (which is used on VM start-up to set it up), we will go to the end, and add the following line : `export PATH="${HOME}/bin:${PATH}"`.
+- Note that we are NOT over-writing the PATH variable, but we are pre-pending the `${HOME}/bin:` piece, so that we point in the right direction of where the executable file we want to execute are actually found.
+    > Note that if you scroll up , the anaconda script added automatically by the installer has done something similar with `PATH`
+- Now let's run `source .bashrc` *(or alternatively, log out and log back in so it runs automatically)*
+- Let's test it; from a directory outside of `bin`, run `docker-compose --version` and this should return the version number.
+- We can also run `which docker-compose` to view the bin path
+
+
+
 ### Git
 
 - Git should already be installed on your VM
@@ -1322,9 +1352,11 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 ### Cloning existing Repo
 
 - Locate your existing repo on Github; go to `Code` > `Clone`, and copy the `HTTPS url`
-- On your VM, run `git clone <url>`
+- Commit and sync all changes, to make sure your github repo is fully updated
+- On your VM, run `git clone <url>`, to copy git repo contents to vm
 
 ![Alt text](.\images\1_git-clone.png)
+
 
 
 ## Port mapping and networks in Docker
