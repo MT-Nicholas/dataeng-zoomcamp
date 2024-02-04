@@ -1343,6 +1343,7 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 - Let's test it; from a directory outside of `bin`, run `docker-compose --version` and this should return the version number.
 - We can also run `which docker-compose` to view the bin path
 
+**CONTINUE HERE**; [VIDEO](https://www.youtube.com/watch?v=ae-CV2KfoN0&ab_channel=DataTalksClub%E2%AC%9B) AT 27.25; REMOVED THE CLONED GIT FROM THE VM; note to re-clone, first remove by run `rm -fr <directory name>` from the base directory of the VM (after confirming the directory name using `ls`); and bring it back with the `git clone` command discussed previously
 
 
 ### Git
