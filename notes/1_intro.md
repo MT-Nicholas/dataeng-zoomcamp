@@ -55,7 +55,7 @@ _Example: Dashboard for Github Codespaces Free Tier_
 
 During the course we will replicate the following architecture:
 
-![architecture diagram](../Reference_Material/images/01_01.jpg)
+![data pipeline](../Reference_Material/images/01_01.png)
 
 * [New York's Taxi and Limousine Corporation's Trip Records Dataset](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/dataset.md): the dataset we will use during the course.
 * [Spark](https://spark.apache.org/): analytics engine for large-scale data processing (distributed processing).
@@ -67,7 +67,6 @@ During the course we will replicate the following architecture:
 
 A **data pipeline** is a service that receives data as input and outputs more data. For example, reading a CSV file, transforming the data somehow and storing it as a table in a PostgreSQL database.
 
-![data pipeline](../Reference_Material/images/01_01.png)
 
 _[Back to the top](#table-of-contents)_
 
