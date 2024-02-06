@@ -1,31 +1,79 @@
->[Back to Index](README.md)
+<!-- vscode-markdown-toc -->
+	* 1. [Table of contents](#Tableofcontents)
+* 1. [Architecture](#Architecture)
+* 2. [Data pipelines](#Datapipelines)
+* 3. [Docker basic concepts](#Dockerbasicconcepts)
+* 4. [Way of Working](#WayofWorking)
+* 5. [Creating a custom pipeline with Docker](#CreatingacustompipelinewithDocker)
+	* 5.1. [Python Script](#PythonScript)
+	* 5.2. [Dockerfile](#Dockerfile)
+		* 5.2.1. [Build Image](#BuildImage)
+		* 5.2.2. [Run Container (using Image)](#RunContainerusingImage)
+* 6. [Running Postgres in a container](#RunningPostgresinacontainer)
+	* 6.1. [Viewing all active Docker containers](#ViewingallactiveDockercontainers)
+	* 6.2. [Remove Docker containers](#RemoveDockercontainers)
+* 7. [Accessing PostGres DB using pgcli (SKIP)](#AccessingPostGresDBusingpgcliSKIP)
+* 8. [Connecting pgAdmin and Postgres with Docker networking and Docker Volume](#ConnectingpgAdminandPostgreswithDockernetworkingandDockerVolume)
+	* 8.1. [Docker network](#Dockernetwork)
+	* 8.2. [Docker Volume](#DockerVolume)
+	* 8.3. [View Docker Items (?)](#ViewDockerItems)
+	* 8.4. [Re-starting Inactive Containers](#Re-startingInactiveContainers)
+	* 8.5. [Re-running containers with Docker networking, and Docker Volumes](#Re-runningcontainerswithDockernetworkingandDockerVolumes)
+	* 8.6. [Connecting PostGres DB to PGAdmin by Adding Server](#ConnectingPostGresDBtoPGAdminbyAddingServer)
+* 9. [Ingesting data to Postgres with Python (using `pd.to_sql()`)](#IngestingdatatoPostgreswithPythonusingpd.to_sql)
+* 10. [Interfacing with Postgres DB](#InterfacingwithPostgresDB)
+* 11. [Using the ingestion script with Docker](#UsingtheingestionscriptwithDocker)
+	* 11.1. [Exporting and testing the script](#Exportingandtestingthescript)
+	* 11.2. [Dockerizing the script](#Dockerizingthescript)
+* 12. [Running Postgres and pgAdmin with Docker-compose](#RunningPostgresandpgAdminwithDocker-compose)
+* 13. [Including .py data ingestion script in docker-compose](#Including.pydataingestionscriptindocker-compose)
+* 14. [SQL refresher](#SQLrefresher)
+* 15. [GCP](#GCP)
+	* 15.1. [GCP Installation](#GCPInstallation)
+	* 15.2. [GCP initial setup](#GCPinitialsetup)
+	* 15.3. [GCP setup for access](#GCPsetupforaccess)
+* 16. [Terraform](#Terraform)
+	* 16.1. [Terraform Introduction](#TerraformIntroduction)
+	* 16.2. [Terraform Providers](#TerraformProviders)
+	* 16.3. [Key Terraform Commands](#KeyTerraformCommands)
+	* 16.4. [Terraform Installation](#TerraformInstallation)
+	* 16.5. [Terraform basics](#Terraformbasics)
+* 17. [Creating GCP infrastructure with Terraform](#CreatingGCPinfrastructurewithTerraform)
+* 18. [Steps](#Steps)
+* 19. [Logging in and out](#Logginginandout)
+* 20. [Create config file for SSH to faciliate connection](#CreateconfigfileforSSHtofaciliateconnection)
+* 21. [Configuring the VM](#ConfiguringtheVM)
+	* 21.1. [GCP SDK](#GCPSDK)
+	* 21.2. [Anaconda (Python)](#AnacondaPython)
+	* 21.3. [Docker](#Docker)
+		* 21.3.1. [Further testing](#Furthertesting)
+		* 21.3.2. [apt-get vs. wget](#apt-getvs.wget)
+		* 21.3.3. [What is `sudo`?](#Whatissudo)
+	* 21.4. [Docker Compose](#DockerCompose)
+		* 21.4.1. [Installation](#Installation)
+		* 21.4.2. [Modifying PATH to make global](#ModifyingPATHtomakeglobal)
+	* 21.5. [Git](#Git)
+	* 21.6. [Cloning existing Repo](#CloningexistingRepo)
+* 22. [Configuring Git connection](#ConfiguringGitconnection)
+* 23. [Running Docker images](#RunningDockerimages)
+	* 23.1. [Checks to confirm Docker containers are running](#CheckstoconfirmDockercontainersarerunning)
+* 24. [Port Forwarding](#PortForwarding)
+	* 24.1. [What is Port Forwarding?](#WhatisPortForwarding)
+	* 24.2. [Checks to confirm port-mapping is successful](#Checkstoconfirmport-mappingissuccessful)
+	* 24.3. [Trouble-shooting](#Trouble-shooting)
+* 25. [PGAdmin](#PGAdmin)
+* 26. [Running data ingestion script](#Runningdataingestionscript)
+* 27. [Terraform](#Terraform-1)
+	* 27.1. [Getting credentials](#Gettingcredentials)
+	* 27.2. [Set up environmental variable for credentials](#Setupenvironmentalvariableforcredentials)
+	* 27.3. [Authenticating the Google Service Account](#AuthenticatingtheGoogleServiceAccount)
 
->Next: [Data Ingestion](2_data_ingestion.md)
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->###  1. <a name='Tableofcontents'></a>Table of contents
 
-### Table of contents
-
-- [Introduction to Data Engineering](#introduction-to-data-engineering)
-  - [Architecture](#architecture)
-  - [Data pipelines](#data-pipelines)
-- [Docker and Postgres](#docker-and-postgres)
-  - [Docker basic concepts](#docker-basic-concepts)
-  - [Creating a custom pipeline with Docker](#creating-a-custom-pipeline-with-docker)
-  - [Running Postgres in a container](#running-postgres-in-a-container)
-  - [Ingesting data to Postgres with Python](#ingesting-data-to-postgres-with-python)
-  - [Connecting pgAdmin and Postgres with Docker networking](#connecting-pgadmin-and-postgres-with-docker-networking)
-  - [Using the ingestion script with Docker](#using-the-ingestion-script-with-docker)
-    - [Exporting and testing the script](#exporting-and-testing-the-script)
-    - [Dockerizing the script](#dockerizing-the-script)
-  - [Running Postgres and pgAdmin with Docker-compose](#running-postgres-and-pgadmin-with-docker-compose)
-  - [SQL refresher](#sql-refresher)
-- [Terraform and Google Cloud Platform](#terraform-and-google-cloud-platform)
-  - [GCP initial setup](#gcp-initial-setup)
-  - [GCP setup for access](#gcp-setup-for-access)
-  - [Terraform basics](#terraform-basics)
-  - [Creating GCP infrastructure with Terraform](#creating-gcp-infrastructure-with-terraform)
-- [Extra content](#extra-content)
-  - [Setting up a development environment in a Google Cloud VM](#setting-up-a-development-environment-in-a-google-cloud-vm)
-  - [Port mapping and networks in Docker](#port-mapping-and-networks-in-docker)
 
 # Environment Configuration
 
@@ -51,7 +99,7 @@ _Example: Dashboard for Github Codespaces Free Tier_
 # Introduction to Data Engineering
 ***Data Engineering*** is the design and development of systems for collecting, storing and analyzing data at scale.
 
-## Architecture
+##  1. <a name='Architecture'></a>Architecture
 
 During the course we will replicate the following architecture:
 
@@ -63,7 +111,7 @@ During the course we will replicate the following architecture:
 * [Airflow](https://airflow.apache.org/): workflow management platform for data engineering pipelines. In other words, a pipeline orchestration tool.
 * [Kafka](https://kafka.apache.org/): unified, high-throughput,low-latency platform for handling real-time data feeds (streaming).
 
-## Data pipelines
+##  2. <a name='Datapipelines'></a>Data pipelines
 
 A **data pipeline** is a service that receives data as input and outputs more data. For example, reading a CSV file, transforming the data somehow and storing it as a table in a PostgreSQL database.
 
@@ -72,7 +120,7 @@ _[Back to the top](#table-of-contents)_
 
 # Docker and Postgres
 
-## Docker basic concepts
+##  3. <a name='Dockerbasicconcepts'></a>Docker basic concepts
 
 _([Video source](https://www.youtube.com/watch?v=EYNwNlOrpr0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=3))_
 
@@ -92,7 +140,7 @@ Docker containers are ***stateless***: any changes done inside a container will 
 
 >Note: you can learn more about Docker and how to set it up on a Mac [in this link](https://github.com/ziritrion/ml-zoomcamp/blob/11_kserve/notes/05b_virtenvs.md#docker). You may also be interested in a [Docker reference cheatsheet](https://gist.github.com/ziritrion/1842c8a4c4851602a8733bba19ab6050#docker).
 
-## Way of Working
+##  4. <a name='WayofWorking'></a>Way of Working
 
 Note that the way we will be working is as follows:
 - We have created a **GitHub repo** (forked from notes made available by a third-party)
@@ -102,9 +150,9 @@ Note that the way we will be working is as follows:
 - Within VS Code, we have extensions for **Python**, **Docker**, etc. and which we can use for all scripting
 - A folder with working scripts will be created for each lesson, in the format *{lesson_number}_{lesson_name}*
 
-## Creating a custom pipeline with Docker
+##  5. <a name='CreatingacustompipelinewithDocker'></a>Creating a custom pipeline with Docker
 
-### Python Script
+###  5.1. <a name='PythonScript'></a>Python Script
 _([Video source](https://www.youtube.com/watch?v=EYNwNlOrpr0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=3))_
 
 Let's create an example pipeline. We will create a dummy `pipeline.py` Python script that receives an argument and prints it.
@@ -129,7 +177,7 @@ We can run this script with `python pipeline.py <some_number>` and it should pri
 * `['pipeline.py', '<some_number>']`
 * `job finished successfully for day = <some_number>`
 
-### Dockerfile
+###  5.2. <a name='Dockerfile'></a>Dockerfile
 
 > To use Docker, we can use **Docker desktop** directly, or else use Docker through extensions from within **VS Code**.
 
@@ -168,7 +216,7 @@ ENTRYPOINT ["python, pipeline.py"]
 
 > `RUN`: Since our base image is python, and this comes with pip pre-installed, we can run a pip command on our base image, which is specified in `FROM`
 
-#### Build Image
+####  5.2.1. <a name='BuildImage'></a>Build Image
 Let's build the image:
 
 ```ssh
@@ -177,7 +225,7 @@ docker build -t test:pandas .
 * `-t`, or `-tag`, denotes the argument for a tag, as follows: The image name will be `test` and its tag will be `pandas`. If the tag isn't specified it will default to `latest`. 
 * note that we are required to provide the location of the Dockerfile; in this case, we are going to navigate to the Dockerfile's directory using `cd` prior to running `docker build ...` and will specify the location as `.` which means 'the current directory'
 
-#### Run Container (using Image)
+####  5.2.2. <a name='RunContainerusingImage'></a>Run Container (using Image)
 We can now run the container image and pass an argument to it, so that our pipeline will receive it:
 
 ```ssh
@@ -189,7 +237,7 @@ docker run -it test:pandas some_number
 
 >Note: It is important to note that the config file needs to be named 'Dockerfile' with no extension and also you need to run the docker commnds (`docker build ...` and `docker run ...`) from the directory where you saved this file; therefore you must first `cd` into the right directory. These instructions are assuming that `pipeline.py` and `Dockerfile` are in the same directory.
 
-## Running Postgres in a container
+##  6. <a name='RunningPostgresinacontainer'></a>Running Postgres in a container
 
 _([Video source](https://www.youtube.com/watch?v=2JM-ziJt0WI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=4))_
 
@@ -224,7 +272,7 @@ docker run -it \
 * The `-p` is for port mapping. We map the default Postgres port to the same port in the host.
 * The last argument is the image name and tag. We run the official `postgres` image on its version `13`.
 
-### Viewing all active Docker containers
+###  6.1. <a name='ViewingallactiveDockercontainers'></a>Viewing all active Docker containers
 
 To view all  Docker containers, we can use
 ```bash
@@ -232,7 +280,7 @@ docker ps       # view all active containers
 docker ps -a    # view all active and non-active containers (history)
 ```
 
-### Remove Docker containers
+###  6.2. <a name='RemoveDockercontainers'></a>Remove Docker containers
 Quite clearly, you should stop the docker container first and then remove it:
 ``` bash
 docker stop container_id_or_name
@@ -240,7 +288,7 @@ docker rm container_id_or_name
 ```
 > Note that we can also specify multiple containers in a one-liner
 
-## Accessing PostGres DB using pgcli (SKIP)
+##  7. <a name='AccessingPostGresDBusingpgcliSKIP'></a>Accessing PostGres DB using pgcli (SKIP)
 The [pgcli](https://www.pgcli.com/) client is an interactive command-line interface for Postgres. Once the Docker container is running, we can log into our database through pgcli with the following command:
 
 > `psql` is the default command-line front end to PostgreSQL, but `pgcli` provides a more intuitive interface
@@ -254,7 +302,7 @@ pgcli -h localhost -p 5432 -u root -d ny_taxi
 * `-d` is the database name.
 * The password is not provided; it will be requested after running the command.
 
-## Connecting pgAdmin and Postgres with Docker networking and Docker Volume
+##  8. <a name='ConnectingpgAdminandPostgreswithDockernetworkingandDockerVolume'></a>Connecting pgAdmin and Postgres with Docker networking and Docker Volume
 
 
 
@@ -269,7 +317,7 @@ docker pull dpage/pgadmin4:<tag name>   # default tag name is `latest` i.e. most
 ```
 > Note this step is **not required**, since when you run an image which is not available already, Docker will automatically attempt to pull the latest version. However, explicitly using docker pull can be useful when you want to ensure you have the latest version of the image or if you prefer to pull it separately for any reason.
 
-### Docker network
+###  8.1. <a name='Dockernetwork'></a>Docker network
 However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
 ![Alt text](./images/1_error-network.png)
 
@@ -283,7 +331,7 @@ docker network create pg-network
 
 That's all it takes to create a network! You can look at the existing networks with `docker network ls`. You can remove the network later with the command `docker network rm pg-network`. 
 
-### Docker Volume
+###  8.2. <a name='DockerVolume'></a>Docker Volume
 
 Recall how a Docker container is not persistent. However, in the context of creating a Database, having persistent storage is desirable.
 - A `Docker volume` is a way to persistently store data generated by a Docker container. It is a separate entity from the container itself and exists independently.
@@ -299,13 +347,13 @@ docker volume create dtc_postgres_volume_local
 
 That's all it takes to create a volume! You can look at the existing networks with `docker volume ls`. You can remove the network later with the command `docker volume rm dtc_postgres_volume_local`. 
 
-### View Docker Items (?)
+###  8.3. <a name='ViewDockerItems'></a>View Docker Items (?)
 
 To view Docker Items (?), navigate here from VS Studio Code Docker Extension:
 
 ![Alt text](./images/1_docker-items.png)
 
-### Re-starting Inactive Containers
+###  8.4. <a name='Re-startingInactiveContainers'></a>Re-starting Inactive Containers
 
 After some time, Docker containers will 'stop' automatically (i.e. sleep). You can also stop them manually.
 
@@ -313,7 +361,7 @@ To re-start, can use terminal or GUI as follows from Docker pane:
 
 ![Alt text](./images/1_docker-start.png)
 
-### Re-running containers with Docker networking, and Docker Volumes
+###  8.5. <a name='Re-runningcontainerswithDockernetworkingandDockerVolumes'></a>Re-running containers with Docker networking, and Docker Volumes
 We will now re-run (i.e. re-create) our `Postgres container` with the added network, so that the pgAdmin container can later find it from the same network (we'll use `pg-database` for the container name). We will also use the docker volume for storage
 
 ```bash
@@ -352,7 +400,7 @@ Note that we can also view a list of ports by going to:
 
 ![image](./images/1_ports.png)
 
-### Connecting PostGres DB to PGAdmin by Adding Server
+###  8.6. <a name='ConnectingPostGresDBtoPGAdminbyAddingServer'></a>Connecting PostGres DB to PGAdmin by Adding Server
 
 Under Quick Links, navigate to "Add New Server" ..._
 
@@ -372,7 +420,7 @@ Click on _Save_. You should now be connected to the database.
 We will explore using pgAdmin in later lessons.
 
 
-## Ingesting data to Postgres with Python (using `pd.to_sql()`)
+##  9. <a name='IngestingdatatoPostgreswithPythonusingpd.to_sql'></a>Ingesting data to Postgres with Python (using `pd.to_sql()`)
 
 _([Video source](https://www.youtube.com/watch?v=2JM-ziJt0WI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=4))_
 
@@ -386,7 +434,7 @@ In the same directory of the .`ipynb` you will need to have the CSV file linked 
 
 >Note: knowledge of Jupyter Notebook, Python environment management and Pandas is asumed in these notes. Please check [this link](https://gist.github.com/ziritrion/9b80e47956adc0f20ecce209d494cd0a#pandas) for a Pandas cheatsheet and [this link](https://gist.github.com/ziritrion/8024025672ea92b8bdeb320d6015aa0d) for a Conda cheatsheet for Python environment management.
 
-## Interfacing with Postgres DB
+##  10. <a name='InterfacingwithPostgresDB'></a>Interfacing with Postgres DB
 Throughout this course, three alternative ways of interfacing with Postgres DB are discussed:
 1. Using `pgcli`, a terminal command-line interface [not recommended, lots of config required]
 2. Using `pgadmin` GUI interface [**recommended**] (refer to `upload-data.ipynb`)
@@ -395,13 +443,13 @@ Throughout this course, three alternative ways of interfacing with Postgres DB a
 For more on SQL Alchemy, refer to ([this video](https://www.youtube.com/watch?v=3IkfkTwqHx4&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6))
 
 
-## Using the ingestion script with Docker
+##  11. <a name='UsingtheingestionscriptwithDocker'></a>Using the ingestion script with Docker
 
 _([Video source](https://www.youtube.com/watch?v=B1WwATwf-vY&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=8))_
 
 We will now prepare the regular python sript (i.e. removed from all the 'notebook clutter' from the .ipynb and converted to a .py) and run it using Docker as part of our automated pipeline.
 
-### Exporting and testing the script
+###  11.1. <a name='Exportingandtestingthescript'></a>Exporting and testing the script
 
 If using jupyter notebooks for progamming in python, you can export the `.ipynb` notebook file as a `.py` with the below command. The file will be generated in the same directory.
 
@@ -462,7 +510,7 @@ FROM
 ```
 * This query should return 1,369,765 rows.
 
-### Dockerizing the script
+###  11.2. <a name='Dockerizingthescript'></a>Dockerizing the script
 
 Let's modify the [Dockerfile we created before](#creating-a-custom-pipeline-with-docker) to include our `ingest_data.py` script and create a new image (instead of our `pipeline.py` script)
 
@@ -505,7 +553,7 @@ docker run -it \
 
 ![Alt text](./images/1_architecture.png)
 
-## Running Postgres and pgAdmin with Docker-compose
+##  12. <a name='RunningPostgresandpgAdminwithDocker-compose'></a>Running Postgres and pgAdmin with Docker-compose
 
 _([Video source](https://www.youtube.com/watch?v=hKI6PkPhpa0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=7))_
 
@@ -593,13 +641,13 @@ docker-compose up -d
 ```
 
 
-## Including .py data ingestion script in docker-compose
+##  13. <a name='Including.pydataingestionscriptindocker-compose'></a>Including .py data ingestion script in docker-compose
 
 **FIGURE THIS OUT: For some reason, this is not covered in detail ...**
 
 If you want to re-run the dockerized ingest script when you run Postgres and pgAdmin with `docker-compose`, you will have to find the name of the virtual network that Docker compose created for the containers. You can use the command `docker network ls` to find it and then change the `docker run` command for the dockerized script to include the network name.
 
-## SQL refresher
+##  14. <a name='SQLrefresher'></a>SQL refresher
 
 Below are a series of SQL query examples to remember how SQL works. For this example we'll asume that we're working with 2 tables named `trips` (list of all yelow taxi trips of NYC for January 2021) and `zones` (list of zone IDs for pick ups and drop offs).
 
@@ -851,10 +899,10 @@ _[Back to the top](#table-of-contents)_
 
 [Video Source](https://www.youtube.com/watch?v=Hajwnmj0xfQ&t=1046s)
 
-## GCP
+##  15. <a name='GCP'></a>GCP
 During this course we will use [Google Cloud Platform](https://cloud.google.com/) (GCP) as our cloud services provider.
 
-### GCP Installation
+###  15.1. <a name='GCPInstallation'></a>GCP Installation
 
 Download the [GCP SDK](https://cloud.google.com/sdk/docs/quickstart) for local setup. Follow the instructions to install and connect to your account and project.
 
@@ -869,7 +917,7 @@ Note that so far, we have not connected to our google cloud account.
 > It is helpful to also download and install the extension `Google Cloud Code`
     
 
-### GCP initial setup
+###  15.2. <a name='GCPinitialsetup'></a>GCP initial setup
 
 GCP is organized around **projects**. You may create a project and access all available GCP resources and services from the project dashboard.
 
@@ -934,7 +982,7 @@ Your local environment should now be ready to work with the GCP environment.
 
 > Note: The method followed in these notes is known as `OAuth`
 
-### GCP setup for access
+###  15.3. <a name='GCPsetupforaccess'></a>GCP setup for access
 
 _([Video source](https://youtu.be/Hajwnmj0xfQ?t=1046&si=Vkg8kh9aLVv2vFCW))_
 
@@ -965,15 +1013,15 @@ Please follow these steps:
 1. Make sure that the `GOOGLE_APPLICATION_CREDENTIALS` environment variable is set.
 
 
-## Terraform
-### Terraform Introduction
+##  16. <a name='Terraform'></a>Terraform
+###  16.1. <a name='TerraformIntroduction'></a>Terraform Introduction
 [Terraform](https://www.terraform.io/) is an [infrastructure as code](https://www.wikiwand.com/en/Infrastructure_as_code) tool.
 
 It  allows us to provision infrastructure resources through code, thus making it possible to handle infrastructure as an additional software component and take advantage of tradtional software tools and utilities, such as version control.
 
 A great benefit is: declarative programming langauge, as opposed to imperative. Consequently, current config file always contains an up-to-date description of the current infrastrcture set-up.
 
-### Terraform Providers
+###  16.2. <a name='TerraformProviders'></a>Terraform Providers
 A provider in Terraform is a plugin that enables interaction with an API. This includes Cloud providers and Software-as-a-service providers. Most cloud providers (AWS, Azure, GCP) have Terraform providers, as seen on the list of providers on Terraform website.
 
 This means that, using Terraform, a company can easily manage its cloud infrastructure in a multi-cloud environment, in a single seamless experience.
@@ -984,7 +1032,7 @@ It also allows us to bypass the cloud vendor GUIs!
 
 ![Alt text](./images/1_terraform.png)
 
-### Key Terraform Commands
+###  16.3. <a name='KeyTerraformCommands'></a>Key Terraform Commands
 
 - `init` - once providers are defined, init will bring the provider-related code to your machine
 - `refresh` - will update the state file to the current actual configuration
@@ -993,7 +1041,7 @@ It also allows us to bypass the cloud vendor GUIs!
 - `destory` - remove all infrastructure defined in the `tf` files
 
 
-### Terraform Installation
+###  16.4. <a name='TerraformInstallation'></a>Terraform Installation
 
 - For installation on both windows and Linux (GitHub CodeSpaces), follow instructions [here](https://developer.hashicorp.com/terraform/install)
 
@@ -1005,7 +1053,7 @@ It also allows us to bypass the cloud vendor GUIs!
 
 
 
-### Terraform basics
+###  16.5. <a name='Terraformbasics'></a>Terraform basics
 
 _([Video source](https://www.youtube.com/watch?v=dNkEgO-CExg&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=10))_
 
@@ -1129,7 +1177,7 @@ With a configuration ready, you are now ready to create your infrastructure. The
         
     > note that after destroying, a `.tfstate.backup` file is created with a version history of the destroyed resources
 
-## Creating GCP infrastructure with Terraform
+##  17. <a name='CreatingGCPinfrastructurewithTerraform'></a>Creating GCP infrastructure with Terraform
 
 _([Video source](https://www.youtube.com/watch?v=dNkEgO-CExg&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=10))_
 
@@ -1202,7 +1250,7 @@ Open a new VS code instance, and open up the terminal, using bash:
 
 [Follow the instructions in this video](https://youtu.be/ae-CV2KfoN0?si=t1OMcGisRGdh2IOc).
 
-## Steps
+##  18. <a name='Steps'></a>Steps
 
 1. Generate [SSH key](https://www.techtarget.com/searchsecurity/definition/Secure-Shell)
     - SSH is a network protocol for authentication.
@@ -1240,11 +1288,11 @@ Open a new VS code instance, and open up the terminal, using bash:
 6. Test connection
     To test connection, run `htop`
 
-## Logging in and out
+##  19. <a name='Logginginandout'></a>Logging in and out
 
 We can log in and out of the environment using `logout` to log out and the original `ssh -i <private_key_path> <user>@<external_ip>` to log in again.
 
-## Create config file for SSH to faciliate connection
+##  20. <a name='CreateconfigfileforSSHtofaciliateconnection'></a>Create config file for SSH to faciliate connection
 - In the same folder as your ssh key, create a new file `config` by running `touch config` from the directory to create the text file, and `code config` to open for editing.
 - This will be an `SSH configuration file`; rather than running the `ssh -i <private_key_path> <user>@<external_ip>` command discussed previously, we will create this configuration file, call it a name (i.e. the Alias), and all we have to run is `ssh <ALIAS>` to connect to the VM, which makes connecting much simpler.
 - e.g. with the alias `de-zoomcamp` , we can run `ssh de-zoomcamp` to connect
@@ -1269,15 +1317,15 @@ We can log in and out of the environment using `logout` to log out and the origi
 
     ![Alt text](./images/1_open-remote-window.png)
 
-## Configuring the VM
+##  21. <a name='ConfiguringtheVM'></a>Configuring the VM
 
 Note that the `Github Codespaces` environment used prior was already pre-configured with some base software; here we need to configure everything from scratch on our `GCP VM`
 
-### GCP SDK
+###  21.1. <a name='GCPSDK'></a>GCP SDK
 - This is not necessary!
 - (Naturally...) GCP VM comes pre-installed with GCP SDK, which you can confirm with `gcloud --version`
 
-### Anaconda (Python)
+###  21.2. <a name='AnacondaPython'></a>Anaconda (Python)
 - Browse to Anaconda website and download linux version; copy url, go to terminal and run `wget <url>` to download the installation file, followed by `bash Anaconda3-2023.09-0-Linux-x86_64.sh` to run the installation, read the terms, accept, keep the default install directory, and say yes to initialize with anaconda.
 
 > We can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -h` to see additional parameters; e.g. can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -b` to run in batch mode and auto-accept license agreements.
@@ -1290,20 +1338,20 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 
 - To view python version installed, just run `python`
 
-### Docker
+###  21.3. <a name='Docker'></a>Docker
 
 - To install docker, we can run `sudo apt-get update` followed by`sudo apt-get install docker.io` to make sure we download and install the altest version of `docker`.
 
 - Docker installation can be confirmed by `docker --version`; however, if we run `docker run hello-world` *(a common test-case)* we will probably get errors because of not enough permissions, which we still need to configure... on the other hand `sudo docker run hello-world` works because we give super-user permissions... therefore we can follow the instructions [here](https://docs.docker.com/engine/install/linux-postinstall/) to configure permissions for docker.
 - On your VM, run `sudo groupadd docker`, `sudo usermod -aG docker $USER`, `newgrp docker`; finally test `docker run hello-world` again
 
-#### Further testing
+####  21.3.1. <a name='Furthertesting'></a>Further testing
 
 - Let's run latest docker container image of ubuntu bash using `docker run -it ubuntu bash` to furthe test; once successful, type `quit` to exit.
 
     ![Alt text](./images/1_ubuntu.png)
 
-#### apt-get vs. wget
+####  21.3.2. <a name='apt-getvs.wget'></a>apt-get vs. wget
 - `wget` is used for fetching files from the internet, while `sudo apt-get` is used for managing and installing packages from Ubuntu's repositories *(similar to CRAN)*. The choice depends on where the software is hosted and how it's distributed.
 
 - `wget`:
@@ -1316,15 +1364,15 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
     - **Purpose**: sudo apt-get is a package management tool for Ubuntu that simplifies the process of installing, updating, and removing software packages.
     - **Usage**: When installing Docker, you use sudo apt-get to fetch and install Docker from Ubuntu's official repositories. The apt-get system takes care of managing dependencies and ensuring a smooth installation.
 
-#### What is `sudo`?
+####  21.3.3. <a name='Whatissudo'></a>What is `sudo`?
 
 - `sudo` stands for "Superuser Do." sudo is used to execute commands with superuser privileges. When you prefix a command with sudo, it runs with elevated permissions, allowing you to perform actions that regular users typically can't.
 
 - You typically use `sudo` with `apt-get` to ensure successful installations, but you don't use `sudo` with `wget` directly. `sudo` is used to execute commands with elevated privileges, and `wget` is a tool for downloading files. However, you might use `sudo` when running commands related to files you've downloaded with wget.
 
-### Docker Compose
+###  21.4. <a name='DockerCompose'></a>Docker Compose
 
-#### Installation
+####  21.4.1. <a name='Installation'></a>Installation
 - To install `docker compose`, easiest approach is to  find the installer online on the official docker git hub repo's `releases`, find the latest one, identify the right `asset` for linux *(linux x86 64)* available [here](https://github.com/docker/compose/releases/tag/v2.24.5)
 - Let's create a folder called `bin` using `mkdir bin`, and use `wget <url> -O docker_compose` to download the installer to the `bin` and give it a clear file name,
 - Once the executable file is downloaded, it will not be marked by the system as executable; use `ls` in directory check file name, and if it is not marked as a .`exe` *(typically, by green font)*, then use `chmod +x docker-compose` to mark it accordingly.
@@ -1333,7 +1381,7 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 
 - Now if we run `./docker-compose --version` from the bin directory, we can see the version; but if we run `docker-compose --version` from another directory, we get nothing ....
 
-#### Modifying PATH to make global
+####  21.4.2. <a name='ModifyingPATHtomakeglobal'></a>Modifying PATH to make global
 
 - We want to make `docker-compose` visibile from all other directories too, so we shall add it to the `PATH` variable, as follows: we use `nano .bashrc` to open the `bashrc` file (which is used on VM start-up to set it up), we will go to the end, and add the following line : `export PATH="${HOME}/bin:${PATH}"`.
 - Note that we are NOT over-writing the PATH variable, but we are pre-pending the `${HOME}/bin:` piece, so that we point in the right direction of where the executable file we want to execute are actually found.
@@ -1342,11 +1390,11 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 - Let's test it; from a directory outside of `bin`, run `docker-compose --version` and this should return the version number.
 - We can also run `which docker-compose` to view the bin path
 
-### Git
+###  21.5. <a name='Git'></a>Git
 
 - Git should already be installed on your VM
 
-### Cloning existing Repo
+###  21.6. <a name='CloningexistingRepo'></a>Cloning existing Repo
 
 - Locate your existing repo on Github; go to `Code` > `Clone`, and copy the `HTTPS url`
 - Commit and sync all changes, to make sure your github repo is fully updated
@@ -1362,7 +1410,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 ![alt text](./images/1_git-clone-load.png)
 
 
-## Configuring Git connection
+##  22. <a name='ConfiguringGitconnection'></a>Configuring Git connection
 
 - When trying to push, may get some errors, such as :
 
@@ -1377,7 +1425,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 - Note that we also need to identify who we are; if we run `git commit` we get an explanatory message, explaining as follows:
     ![alt text](./images/1_GCP-identity.png)
 
-## Running Docker images
+##  23. <a name='RunningDockerimages'></a>Running Docker images
 
 - We can use the same `docker-compose.yml` file developed previously for running the `Postgres` and `pgAdmin` containers by simply navigtating to the directory and executing: 
 
@@ -1389,13 +1437,13 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
     ![alt text](./images/1_GCP-docker-compose.png)
 
 
-### Checks to confirm Docker containers are running 
+###  23.1. <a name='CheckstoconfirmDockercontainersarerunning'></a>Checks to confirm Docker containers are running 
 - Confirm that both pgadmin and postgres containers are up using `docker ps`
 - Test postgresdb container with pgcli from VM terminal; install pgcli on the vm using `pip install pgcli`. Once installed, connect using `pgcli -h localhost -U root -d ny_taxi` and `root` for password. You can use the command `\dt` to list all tables, and see if you get anything to confirm the connection is running well.
 
 ![alt text](./images/1_GCP-pgcli.png)
 
-## Port Forwarding
+##  24. <a name='PortForwarding'></a>Port Forwarding
 
 - To make the services accessible on local host, make sure to set up port forwarding, which based on the ports specified in the `docker-compose` script, are: `5432` and `8080`
 
@@ -1404,7 +1452,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 
 
 
-### What is Port Forwarding?
+###  24.1. <a name='WhatisPortForwarding'></a>What is Port Forwarding?
 
 - Port forwarding, sometimes called port mapping, allows computers or services in private networks to connect over the internet with other public or private computers or services. It can allow you to make services running on one machine accessible from another machine.
 
@@ -1434,25 +1482,25 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 
     - Once set up, you can access the application locally on your machine by going to http://localhost:8080, and this request gets forwarded to the Docker container running on the remote VM.
 
-### Checks to confirm port-mapping is successful
+###  24.2. <a name='Checkstoconfirmport-mappingissuccessful'></a>Checks to confirm port-mapping is successful
 - Test Docker containers with pgcli from local bash terminal (new VS code instance); install pgcli on your machine using `pip install pgcli`. Once installed, connect using `pgcli -h localhost -U root -d ny_taxi` and `root` for password. You can use the command `\dt` to list all tables, and see if you get anything to confirm the connection is running well.
 - Test `localhost:8080` from browser, to see if it loads
 
 ![alt text](./images/1_GCP-pgcli.png)
 
-### Trouble-shooting
+###  24.3. <a name='Trouble-shooting'></a>Trouble-shooting
 
 - For some reason, trying this the first time did not work. Port mapping needed to change from `8080:80` to another mapping (`8081:80`) to work. After re-booting PC , tried 8080:80 again, and it worked. May be related to the `8080:80` port mapping not being available (because it is used by an older service that was no longer running)
 
 - Refer to this [video](https://www.youtube.com/watch?v=tOr4hTsHOzU)
 
-## PGAdmin
+##  25. <a name='PGAdmin'></a>PGAdmin
 
 - Open PGAdmin from `localhost:8080` and follow the steps discussed prior to add a new server; note that 
 - IMPORTANT NOTE: Make sure that you use the correct `service name` from your `docker-compose` file for the `hostname` setting (i.e. `pgdatabase`)
     ![alt text](./images/1_GCP-pgadmin.png)
 
-## Running data ingestion script
+##  26. <a name='Runningdataingestionscript'></a>Running data ingestion script
 
 - From your VM terminal, run `pip install psycopg2-binary` to install `psycopg2`.
 - Navigate to the dir of the `upload-data.ipynb` jupyter notebook script.
@@ -1464,12 +1512,12 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 - Run the notebook, and see if the data is added to the DB through PGadmin, to test if the connection to the database is correct
 - Once confirmed, close the Jupyter notebook and run the ingestion script `ingest_data.py` directly.
 
-## Terraform
+##  27. <a name='Terraform-1'></a>Terraform
 
 - Install terraform from terminal using same instructions as prior
 - Note that to utilise terraform commands, we also need to connect to the service account created previously.
 
-### Getting credentials
+###  27.1. <a name='Gettingcredentials'></a>Getting credentials
 - Before we run terraform, we need to bring in the service account credentials. We can use SFTP to transfer the files securely.
     - Suppose that the credentials `.json` is stored in `C:\Users\nikku\.gc` as `dtc-de-412818-e5d2438b3da7.json`
     - Open bash terminal on your local machine, naigate to this dir, and connect to the vm-instance using its alias as per SSH config file, using `sftp de-zoomcamp`
@@ -1479,11 +1527,11 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 
     ![alt text](./images/1_gcp-sftp.png)
 
-### Set up environmental variable for credentials
+###  27.2. <a name='Setupenvironmentalvariableforcredentials'></a>Set up environmental variable for credentials
 
 - As previous, setting up an env var for the credentials is convenient, as follows, if the right dirs were set up: `export GOOGLE_APPLICATION_CREDENTIALS=~/.gc/dtc-de-412818-e5d2438b3da7.json`
 
-### Authenticating the Google Service Account
+###  27.3. <a name='AuthenticatingtheGoogleServiceAccount'></a>Authenticating the Google Service Account
 
 - Previously, we authenticated via OAuth. Here we present new way of authenticating from VM that requires less interaction, using a key-file (i.e. the `.json` file), by running:
 
