@@ -537,7 +537,7 @@ services:
         ...
 ```
 
-Here's the `docker-compose.yaml` file for running the `Postgres` and `pgAdmin` containers:
+Here's the `docker-compose.yml` file for running the `Postgres` and `pgAdmin` containers:
 
 
 ```yaml
@@ -996,7 +996,7 @@ It also allows us to bypass the cloud vendor GUIs!
 
 ### Terraform Installation
 
-- For installation on both windows and Linux (GitHub CodeSpaces), follow instructions [here](https://cloud.google.com/sdk/docs/downloads-interactive#linux-mac)
+- For installation on both windows and Linux (GitHub CodeSpaces), follow instructions [here](https://developer.hashicorp.com/terraform/install)
 
 >Check with `terraform --version` to make sure the latest version of terraform is installed (this required quite some config to set up)
 
@@ -1343,9 +1343,6 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 - Let's test it; from a directory outside of `bin`, run `docker-compose --version` and this should return the version number.
 - We can also run `which docker-compose` to view the bin path
 
-**CONTINUE HERE**; [VIDEO](https://www.youtube.com/watch?v=ae-CV2KfoN0&ab_channel=DataTalksClub%E2%AC%9B) AT 27.25; REMOVED THE CLONED GIT FROM THE VM; note to re-clone, first remove by run `rm -fr <directory name>` from the base directory of the VM (after confirming the directory name using `ls`); and bring it back with the `git clone` command discussed previously
-
-
 ### Git
 
 - Git should already be installed on your VM
@@ -1356,16 +1353,147 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 - Commit and sync all changes, to make sure your github repo is fully updated
 - On your VM, run `git clone <url>`, to copy git repo contents to vm
 
+
 ![Alt text](.\images\1_git-clone.png)
 
+After cloning the repo, we can load it into VS Code to edit the repo as if it were local as follows: 
+
+*Explorer > Open Folder > Folder name (`dataeng-zoomcamp`)*
+
+![alt text](.\images\1_git-clone-load.png)
 
 
-## Port mapping and networks in Docker
+## Configuring Git connection
 
-If you're having issues with Docker and networking (especially if you already have Postgres running locally in your host computer), a [videoguide is also available](https://www.youtube.com/watch?v=tOr4hTsHOzU).
+- When trying to push, may get some errors, such as :
 
-The video also explains network, architecture, and port mappings.
+![alt text](\.images\1_GCP-git-error.png)
 
+- We need to set up authentcation. There are many ways. One way: create a token as per [instructions](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens), which will be pre-pended to the HTTPS url copied previously, in the format: `git remote set-url origin https://<TOKEN>@github.com/<user_name or organization_name>/<repo_name>.git`. Based on [source](https://stackoverflow.com/questions/32639393/error-message-authentication-failed-on-the-git-remote)
+
+- This can be set using the command `git remote set-url origin https://github.com/MT-Nicholas/dataeng-zoomcamp.git` and reviewed using `git remote -v` before & after making the change.
+
+![alt text](.\images\1_GCP-token.png)
+
+## Running Docker images
+
+- We can use the same `docker-compose.yml` file developed previously for running the `Postgres` and `pgAdmin` containers by simply navigtating to the directory and executing: 
+
+    ``` bash
+    docker-compose up -d
+    ```
+    > Remember that -d represents detached mode
+
+    ![alt text](.\images\1_GCP-docker-compose.png)
+
+
+### Checks to confirm Docker containers are running 
+- Confirm that both pgadmin and postgres containers are up using `docker ps`
+- Test postgresdb container with pgcli from VM terminal; install pgcli on the vm using `pip install pgcli`. Once installed, connect using `pgcli -h localhost -U root -d ny_taxi` and `root` for password. You can use the command `\dt` to list all tables, and see if you get anything to confirm the connection is running well.
+
+![alt text](.\images\1_GCP-pgcli.png)
+
+## Port Forwarding
+
+- To make the services accessible on local host, make sure to set up port forwarding, which based on the ports specified in the `docker-compose` script, are: `5432` and `8080`
+
+    ![alt text](.\images\1_GCP-ports.png)
+    ![alt text](.\images\1_GCP-ports2.png)
+
+
+
+### What is Port Forwarding?
+
+- Port forwarding, sometimes called port mapping, allows computers or services in private networks to connect over the internet with other public or private computers or services. It can allow you to make services running on one machine accessible from another machine.
+
+- In the context of Docker and a remote cloud VM:
+
+1. **Docker Container Setup**:
+
+    - When you run an application in a Docker container, it often listens for connections on a specific port, let's say port 8080.
+
+2. **Mapping Ports**:
+
+    - Port forwarding involves mapping a port on your local machine (usually localhost) to a port on the Docker container. 
+    - For example, you might map port 8080 on your machine to port 8080 in the Docker container.
+
+3. **Accessing from Remote VM**:
+    - When you run the Docker container on a remote VM, you need a way to access the application from outside the VM. Port forwarding facilitates this by directing any traffic coming to a specific port on the VM to the corresponding port on the Docker container.
+        - Command Example:
+    -    This is commonly done using the -p flag when running the Docker container. For instance:
+    ```bash
+    docker run -p 8080:8080 your-container-image
+    ```
+4. **Firewall Considerations**:
+
+    - Ensure that the firewall on the VM allows incoming traffic on the specified port. This ensures that requests can reach the Docker container.
+
+5. **Accessing Locally**:
+
+    - Once set up, you can access the application locally on your machine by going to http://localhost:8080, and this request gets forwarded to the Docker container running on the remote VM.
+
+### Checks to confirm port-mapping is successful
+- Test Docker containers with pgcli from local bash terminal (new VS code instance); install pgcli on your machine using `pip install pgcli`. Once installed, connect using `pgcli -h localhost -U root -d ny_taxi` and `root` for password. You can use the command `\dt` to list all tables, and see if you get anything to confirm the connection is running well.
+- Test `localhost:8080` from browser, to see if it loads
+
+![alt text](.\images\1_GCP-pgcli.png)
+
+### Trouble-shooting
+
+- For some reason, trying this the first time did not work. Port mapping needed to change from `8080:80` to another mapping (`8081:80`) to work. After re-booting PC , tried 8080:80 again, and it worked. May be related to the `8080:80` port mapping not being available (because it is used by an older service that was no longer running)
+
+- Refer to this [video](https://www.youtube.com/watch?v=tOr4hTsHOzU)
+
+## PGAdmin
+
+- Open PGAdmin from `localhost:8080` and follow the steps discussed prior to add a new server; note that 
+- IMPORTANT NOTE: Make sure that you use the correct `service name` from your `docker-compose` file for the `hostname` setting (i.e. `pgdatabase`)
+    ![alt text](.\images\1_GCP-pgadmin.png)
+
+## Running data ingestion script
+
+- From your VM terminal, run `pip install psycopg2-binary` to install `psycopg2`.
+- Navigate to the dir of the `upload-data.ipynb` jupyter notebook script.
+- To open jupyter notebook in your browser: forward port `8888`,  run `jupyter notebook`, and click one of the links:
+
+    ![alt text](.\images\1_GCP-jupyter.png)
+
+- Open the `upload-data.ipynb` file from the interface
+- Run the notebook, and see if the data is added to the DB through PGadmin, to test if the connection to the database is correct
+- Once confirmed, close the Jupyter notebook and run the ingestion script `ingest_data.py` directly.
+
+## Terraform
+
+- Install terraform from terminal using same instructions as prior
+- Note that to utilise terraform commands, we also need to connect to the service account created previously.
+
+### Getting credentials
+- Before we run terraform, we need to bring in the service account credentials. We can use SFTP to transfer the files securely.
+    - Suppose that the credentials `.json` is stored in `C:\Users\nikku\.gc` as `dtc-de-412818-e5d2438b3da7.json`
+    - Open bash terminal on your local machine, naigate to this dir, and connect to the vm-instance using its alias as per SSH config file, using `sftp de-zoomcamp`
+    - From here, create a new dir, `.gc` *(outside of the dataeng-zoomcamp clone repo, to avoid pushing the .json online)*, to mirror your local environment.
+    - Navigate to this dir, and run `put dtc-de-412818-e5d2438b3da7.json`
+    - Quit when done
+
+    ![alt text](.\images\1_gcp-sftp.png)
+
+### Set up environmental variable for credentials
+
+- As previous, setting up an env var for the credentials is convenient, as follows, if the right dirs were set up: `export GOOGLE_APPLICATION_CREDENTIALS=~/.gc/dtc-de-412818-e5d2438b3da7.json`
+
+### Authenticating the Google Service Account
+
+- Previously, we authenticated via OAuth. Here we present new way of authenticating from VM that requires less interaction, using a key-file (i.e. the `.json` file), by running:
+
+    ```bash
+    gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+    ```
+
+    ![alt text](.\images\1_GCP-authenticate.png)
+
+- Once authenticated, we can `terraform init`, `terraform plan`, `terraform apply`, and `terraform destroy` to apply and reverse the infra changes.
+
+ 
 _[Back to the top](#table-of-contents)_
 
 >[Back to Index](README.md)
