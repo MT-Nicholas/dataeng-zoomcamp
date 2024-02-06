@@ -46,7 +46,7 @@ It is recommended not to use a local environment; to start via github codespaces
 
 _Example: Dashboard for Github Codespaces Free Tier_
 
-![Alt text](.\images\1_github-codespaces.png)
+![Alt text](./images/1_github-codespaces.png)
 
 # Introduction to Data Engineering
 ***Data Engineering*** is the design and development of systems for collecting, storing and analyzing data at scale.
@@ -272,7 +272,7 @@ docker pull dpage/pgadmin4:<tag name>   # default tag name is `latest` i.e. most
 
 ### Docker network
 However note that, before we go ahead and create the pgadmin container, we need to make sure that the two docker containers (pgadmin, postgres database) are created on the same network, to be able to see each other. Otherwise, we get an error similar to:
-![Alt text](.\images\1_error-network.png)
+![Alt text](./images/1_error-network.png)
 
 Once again, quick google search for `docker network create` gives us the following [guidance](https://docs.docker.com/engine/reference/commandline/network_create/).
 
@@ -368,7 +368,7 @@ Under _General_ give the Server a name and under _Connection_ add the same host 
 
 Click on _Save_. You should now be connected to the database.
 
-![Alt text](.\images\1_pg_connected.png)
+![Alt text](./images/1_pg_connected.png)
 
 We will explore using pgAdmin in later lessons.
 
@@ -504,7 +504,7 @@ docker run -it \
 * Note that in reality, rather than creating a `docker network` and accesssing a local database on our local network through `host`, we would have a database that runs on the cloud, and use the url of this database for the `host` parameter.
 * Moreover, note that rather than passing arugments through Docker, we could have e.g. Kubernetes job, Airflow, etc.
 
-![Alt text](.\images\1_architecture.png)
+![Alt text](./images/1_architecture.png)
 
 ## Running Postgres and pgAdmin with Docker-compose
 
@@ -579,7 +579,7 @@ docker-compose up
 
 Since the settings for pgAdmin were stored within the container and we have killed the previous one, you will have to re-connect PostGres DB to PGAdmin by Adding Server as seen in previous sections.
 
-![Alt text](.\images\1_pg_create_server_docker_compose.png)
+![Alt text](./images/1_pg_create_server_docker_compose.png)
 
 You will have to press `Ctrl+C` in order to shut down the containers. The proper way of shutting them down is with this command:
 
@@ -863,7 +863,7 @@ Download the [GCP SDK](https://cloud.google.com/sdk/docs/quickstart) for local s
     
 To check whether the Google Cloud SDK has been installed successfully on your machine, in the Windows Terminal, type `gcloud -v`. 
     
-(![Alt text](.\images\1_gcloud-version.png)
+(![Alt text](./images/1_gcloud-version.png)
 
 Note that so far, we have not connected to our google cloud account.
 
@@ -893,7 +893,7 @@ Please follow these steps:
         >Click on the previous drop down menu to select it otherwise.
 1. **Setup a service account for this project and download the JSON authentication key files.**
     1. _IAM & Admin_ > _Service accounts_ > _Create service account_
-    ![Alt text](.\images\1_IAM.png)
+    ![Alt text](./images/1_IAM.png)
     1. Provide a service account name. We will use `dtc-de-user`. Leave all other fields with the default values. Click on _Create and continue_.
         > Note that a unique service accout id is created in the format `service-accout-name@projectID...serviceaccout...`
     1. Grant the Viewer role (_Basic_ > _Viewer_) to the service account and click on _Continue_
@@ -923,12 +923,12 @@ Please follow these steps:
         gcloud auth application-default login
         ```
         - You will get a message asking you to confirm that you want to use the custom environment variable's keys, as opposed to the default keys linked to the owner.
-        ![Alt text](.\images\1_gcloud-default.png)
+        ![Alt text](./images/1_gcloud-default.png)
         - We do, of course, because we want to use the key associated with the service account, so confirm _Yes_.
         - You will be prompted to log into your account via browser and to give access to the `GoogleAuthLibrary`.
         - If successful, you should get:
-        ![Alt text](.\images\1_gcloud-success.png)
-        ![Alt text](.\images\1_gcloud_success2.png)
+        ![Alt text](./images/1_gcloud-success.png)
+        ![Alt text](./images/1_gcloud_success2.png)
         > Note this is necessary each time your session expires
 
 Your local environment should now be ready to work with the GCP environment.
@@ -961,7 +961,7 @@ Please follow these steps:
    * https://console.cloud.google.com/apis/library/iam.googleapis.com
    * https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com
 
-   ![Alt text](.\images\1_API.png)
+   ![Alt text](./images/1_API.png)
     > Note that whenever local account interacts with cloud resources, it does not interact with the cloud resource directly, it interacts through APIs, so APIs enable the communication between local and cloud resources
 1. Make sure that the `GOOGLE_APPLICATION_CREDENTIALS` environment variable is set.
 
@@ -983,7 +983,7 @@ It also allows us to bypass the cloud vendor GUIs!
 
 > Terraform is cloud-agnostic and supports multiple cloud providers, and not just GCP. This means engineers can use the same Terraform code and workflows to manage infrastructure across different cloud platforms or even in hybrid cloud environments. This is not to mention the reproducibility it enables. Oh.. and it is easier for version control too. Lotta benefits.
 
-![Alt text](.\images\1_terraform.png)
+![Alt text](./images/1_terraform.png)
 
 ### Key Terraform Commands
 
@@ -1161,7 +1161,7 @@ terraform init
 
 This will download the necessary plugins to connect to GCP and download them to `./.terraform`.
 
-![Alt text](.\images\1_terraform-init.png)
+![Alt text](./images/1_terraform-init.png)
 
 Now let's plan the infrastructure:
 
@@ -1179,8 +1179,8 @@ terraform apply
 
 You will need to confirm this step by typing `yes` when prompted. This will create all the necessary components in the infrastructure an return a `terraform.tfstate` with the current state of the infrastructure.
 
-![Alt text](.\images\1_terraform-apply.png)
-![Alt text](.\images\1_terraform-apply-gcp.png)
+![Alt text](./images/1_terraform-apply.png)
+![Alt text](./images/1_terraform-apply-gcp.png)
 
 
 After you've successfully created the infrastructure, you may destroy it so that it doesn't consume credit unnecessarily:
@@ -1199,7 +1199,7 @@ We will now switch our development environment from `Github Codespaces` to a `Go
 
 Open a new VS code instance, and open up the terminal, using bash:
 
-![Alt text](.\images\1_local_bash.png)
+![Alt text](./images/1_local_bash.png)
 
 [Follow the instructions in this video](https://youtu.be/ae-CV2KfoN0?si=t1OMcGisRGdh2IOc).
 
@@ -1213,21 +1213,21 @@ Open a new VS code instance, and open up the terminal, using bash:
         
         > The key can be created on any environment available to you, and the generated keys, once generated, can be used across from any platforms/environment. We will generate the keys on our local windows environment, since this is what is available for us (using Windows CMD). Instructions include additional parameters, but it works to simply run `ssh-keygen` and `Enter` for any prompts to leave blank.
         
-        ![Alt text](.\images\1_SSH-generate.png)
+        ![Alt text](./images/1_SSH-generate.png)
         
     
 2. Add SSH Key to GCP's `Compute Engine API` for Authentication
     - Note that `Compute Engine` is the VM we will be using for our environment, and like all other APIs, they must be enabled the first time.
     - On GCP, navigate to: _Compute Engine > Metadata > SSH Keys_, and paste the public key here.
         > As explained on this page: SSH keys can be used to connect to the VM instances of a project. Project-level keys are propagated to all VM instances that DO not have their own SSH keys. i.e. All instances in a project inherit the provided SSH keys.
-        ![Alt text](.\images\1_SSH-GCP.png) 
+        ![Alt text](./images/1_SSH-GCP.png) 
 3. Create VM on GCP
     - Navigate to: _Compute Engine > VM instances > Create Instance_
     - Recommend specs: name = de-zoomcamp; region = europe-west1(Belgium); machine type: e2-standard-2;
     - (optional) Debian OS is fine, but we can change Boot Disk to another OS, e.g. Ubuntu. And we can assign 30GB to be on the safe side.
 4. Take note of External IP
     - We need to copy the External IP which will be used to connect
-    ![Alt text](.\images\1_external-IP.png)
+    ![Alt text](./images/1_external-IP.png)
 5. Connect to VM
     - Connect to VM by running:
         
@@ -1237,7 +1237,7 @@ Open a new VS code instance, and open up the terminal, using bash:
         
         > If prompted to continue connecting, say `yes`
         
-        ![Alt text](.\images\1_connect-VM.png)
+        ![Alt text](./images/1_connect-VM.png)
 6. Test connection
     To test connection, run `htop`
 
@@ -1268,7 +1268,7 @@ We can log in and out of the environment using `logout` to log out and the origi
 - We can install the `Remote - SSH` and `Remote - SSH: Editing Configuration Files` extensions on VS Code to make it easier to connect from VS Code to the remote Google GCP VM;
 - Now, from VS code, you can `Open a Remote Window` (via bottom-left button) and then choose from a range of options under `Remote-SSH` (as shown below), click `Connect to Host` and, because we already created the SSH config file, we have the alias available already; click to connect.
 
-    ![Alt text](.\images\1_open-remote-window.png)
+    ![Alt text](./images/1_open-remote-window.png)
 
 ## Configuring the VM
 
@@ -1283,11 +1283,11 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 
 > We can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -h` to see additional parameters; e.g. can run `bash Anaconda3-2023.09-0-Linux-x86_64.sh -b` to run in batch mode and auto-accept license agreements.
 
-    ![Alt text](.\images\1_anaconda_download.png)
+    ![Alt text](./images/1_anaconda_download.png)
 
 - When installation complete, make sure to **initialize** either by answering `yes` to the prompt; or else following the instructions [here]( https://docs.anaconda.com/free/anaconda/reference/faq/). Initialising will add a prompt to the start up script that loads anaconda whenever the VM is started; you can see the initialisation script that is executed every time the VM is turned on (including new piece for anaconda) using `load .bashrc`
 
-    ![Alt text](.\images\1_anaconda_init.png)
+    ![Alt text](./images/1_anaconda_init.png)
 
 - To view python version installed, just run `python`
 
@@ -1302,7 +1302,7 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 
 - Let's run latest docker container image of ubuntu bash using `docker run -it ubuntu bash` to furthe test; once successful, type `quit` to exit.
 
-    ![Alt text](.\images\1_ubuntu.png)
+    ![Alt text](./images/1_ubuntu.png)
 
 #### apt-get vs. wget
 - `wget` is used for fetching files from the internet, while `sudo apt-get` is used for managing and installing packages from Ubuntu's repositories *(similar to CRAN)*. The choice depends on where the software is hosted and how it's distributed.
@@ -1330,7 +1330,7 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 - Let's create a folder called `bin` using `mkdir bin`, and use `wget <url> -O docker_compose` to download the installer to the `bin` and give it a clear file name,
 - Once the executable file is downloaded, it will not be marked by the system as executable; use `ls` in directory check file name, and if it is not marked as a .`exe` *(typically, by green font)*, then use `chmod +x docker-compose` to mark it accordingly.
 
-    ![Alt text](.\images\1_docker-compose-exe.png)
+    ![Alt text](./images/1_docker-compose-exe.png)
 
 - Now if we run `./docker-compose --version` from the bin directory, we can see the version; but if we run `docker-compose --version` from another directory, we get nothing ....
 
@@ -1354,13 +1354,13 @@ Note that the `Github Codespaces` environment used prior was already pre-configu
 - On your VM, run `git clone <url>`, to copy git repo contents to vm
 
 
-![Alt text](.\images\1_git-clone.png)
+![Alt text](./images/1_git-clone.png)
 
 After cloning the repo, we can load it into VS Code to edit the repo as if it were local as follows: 
 
 *Explorer > Open Folder > Folder name (`dataeng-zoomcamp`)*
 
-![alt text](.\images\1_git-clone-load.png)
+![alt text](./images/1_git-clone-load.png)
 
 
 ## Configuring Git connection
@@ -1373,7 +1373,10 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 
 - This can be set using the command `git remote set-url origin https://github.com/MT-Nicholas/dataeng-zoomcamp.git` and reviewed using `git remote -v` before & after making the change.
 
-![alt text](.\images\1_GCP-token.png)
+![alt text](./images/1_GCP-token.png)
+
+- Note that we also need to identify who we are; if we run `git commit` we get an explanatory message, explaining as follows:
+    ![alt text](./images/1_GCP-identity.png)
 
 ## Running Docker images
 
@@ -1384,21 +1387,21 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
     ```
     > Remember that -d represents detached mode
 
-    ![alt text](.\images\1_GCP-docker-compose.png)
+    ![alt text](./images/1_GCP-docker-compose.png)
 
 
 ### Checks to confirm Docker containers are running 
 - Confirm that both pgadmin and postgres containers are up using `docker ps`
 - Test postgresdb container with pgcli from VM terminal; install pgcli on the vm using `pip install pgcli`. Once installed, connect using `pgcli -h localhost -U root -d ny_taxi` and `root` for password. You can use the command `\dt` to list all tables, and see if you get anything to confirm the connection is running well.
 
-![alt text](.\images\1_GCP-pgcli.png)
+![alt text](./images/1_GCP-pgcli.png)
 
 ## Port Forwarding
 
 - To make the services accessible on local host, make sure to set up port forwarding, which based on the ports specified in the `docker-compose` script, are: `5432` and `8080`
 
-    ![alt text](.\images\1_GCP-ports.png)
-    ![alt text](.\images\1_GCP-ports2.png)
+    ![alt text](./images/1_GCP-ports.png)
+    ![alt text](./images/1_GCP-ports2.png)
 
 
 
@@ -1436,7 +1439,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 - Test Docker containers with pgcli from local bash terminal (new VS code instance); install pgcli on your machine using `pip install pgcli`. Once installed, connect using `pgcli -h localhost -U root -d ny_taxi` and `root` for password. You can use the command `\dt` to list all tables, and see if you get anything to confirm the connection is running well.
 - Test `localhost:8080` from browser, to see if it loads
 
-![alt text](.\images\1_GCP-pgcli.png)
+![alt text](./images/1_GCP-pgcli.png)
 
 ### Trouble-shooting
 
@@ -1448,7 +1451,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 
 - Open PGAdmin from `localhost:8080` and follow the steps discussed prior to add a new server; note that 
 - IMPORTANT NOTE: Make sure that you use the correct `service name` from your `docker-compose` file for the `hostname` setting (i.e. `pgdatabase`)
-    ![alt text](.\images\1_GCP-pgadmin.png)
+    ![alt text](./images/1_GCP-pgadmin.png)
 
 ## Running data ingestion script
 
@@ -1456,7 +1459,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
 - Navigate to the dir of the `upload-data.ipynb` jupyter notebook script.
 - To open jupyter notebook in your browser: forward port `8888`,  run `jupyter notebook`, and click one of the links:
 
-    ![alt text](.\images\1_GCP-jupyter.png)
+    ![alt text](./images/1_GCP-jupyter.png)
 
 - Open the `upload-data.ipynb` file from the interface
 - Run the notebook, and see if the data is added to the DB through PGadmin, to test if the connection to the database is correct
@@ -1475,7 +1478,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
     - Navigate to this dir, and run `put dtc-de-412818-e5d2438b3da7.json`
     - Quit when done
 
-    ![alt text](.\images\1_gcp-sftp.png)
+    ![alt text](./images/1_gcp-sftp.png)
 
 ### Set up environmental variable for credentials
 
@@ -1489,7 +1492,7 @@ After cloning the repo, we can load it into VS Code to edit the repo as if it we
     gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
     ```
 
-    ![alt text](.\images\1_GCP-authenticate.png)
+    ![alt text](./images/1_GCP-authenticate.png)
 
 - Once authenticated, we can `terraform init`, `terraform plan`, `terraform apply`, and `terraform destroy` to apply and reverse the infra changes.
 
